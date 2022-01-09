@@ -84,7 +84,13 @@ function isValidPrinter(printer) {
 
 exports.getPrinters()
 .then(result => {
-    console.log('==== success: ' + JSON.stringify(result, null, 4))
+    console.log('==== success: ' + JSON.stringify(result, null, 4));
+
+    // [{
+    //     "deviceId": "DYMO LabelWriter 450",
+    //     "name": "DYMO LabelWriter 450"
+    // }];
+
 })
     .catch(error => {
     console.log('==== error: ' + error)
