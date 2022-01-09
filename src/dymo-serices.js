@@ -217,8 +217,8 @@ module.exports = function (cfg) {
  * @param {{interface:string,host?:string,port?:number,deviceId?:string}} config Config object
  */
 function validateConfig(config) {
-    const INTERFACES = ['NETWORK', 'CUPS', 'DEVICE', 'AUTO'];
-    if (INTERFACES.indexOf(config.interface) === -1) {
+    const INTERFACES = ['NETWORK', 'CUPS', 'WINDOWS'];
+    if (config.interface && INTERFACES.indexOf(config.interface) === -1) {
         throw Error(`Invalid interface "${config.interface}", valid interfaces are: ${INTERFACES.join(', ')}`);
     }
 }
@@ -392,12 +392,4 @@ function tmpFile(prefix, suffix, tmpdir) {
     tmpdir = tmpdir ? tmpdir : os.tmpdir();
     return path.join(tmpdir, prefix + crypto.randomBytes(16).toString('hex') + suffix);
 }
-
-listPrintersMacLinux()
-    .then(result => {
-        console.log('==== Result: ' + JSON.stringify(result, null, 4));
-    })
-    .catch(error => {
-        console.log('==== Error: ' + error);
-    })
 

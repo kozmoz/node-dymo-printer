@@ -26,27 +26,24 @@ const labels = [
     }
 ];
 
-const {imageWidth, imageHeight} = labels[1];
-const horizontalMargin = 50;
+// Example print command.
+(async function () {
 
-imageServices.createImage(imageWidth, imageHeight, horizontalMargin,
-    64, 'Hello World\nTweede haha\nDerde \nVierde regel 123')
-    .then(image => {
-        image.write(__dirname + '/image.png');
-        imageServices.convertImageToBitmapBuffer(image)
-            .then(bitmapBuffer => {
-                dymoServices.print(bitmapBuffer)
-                    .then(() => {
-                        console.log('Successfully printed');
-                    })
-                    .catch(error => {
-                        console.error('Error: ' + error);
-                    });
-            })
-            .catch(error => {
-                console.error('Error: ' + error);
-            });
-    })
-    .catch(error => {
-        console.error('Error: ' + error);
-    });
+    const {imageWidth, imageHeight} = labels[1];
+
+    const image = await imageServices.createImage(imageWidth, imageHeight, 50, 128, 'Hello World!');
+    image.write(__dirname + '/image.png');
+
+    // Rotate image for label writer.
+    image.rotate(-90, true)
+    const bitmap = await imageServices.convertImageToBitmapBuffer(image);
+
+    dymoServices.print(bitmap)
+        .then(() => {
+            console.log('Successfully printed');
+        })
+        .catch(error => {
+            console.error('Error: ' + error);
+        });
+})();
+

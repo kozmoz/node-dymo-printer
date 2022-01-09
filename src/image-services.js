@@ -61,9 +61,7 @@ exports.createImage = (imageWidth, imageHeight, horizontalMargin, fontSize, text
                         .greyscale()
                         .brightness(.3)
                         .dither565()
-                        .posterize(2)
-                        // Rotate to image print direction.
-                        .rotate(-90, true /* Change image width and height */);
+                        .posterize(2);
                     resolve(image);
                 })
                 .catch(reject);
