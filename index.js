@@ -2,10 +2,10 @@ const DymoServices = require('./src/dymo-serices');
 const imageServices = require('./src/image-services');
 
 const config = {
-    interface: 'NETWORK',
+    // interface: 'NETWORK',
     // host: '169.254.25.51',
-    host: '192.168.1.229',
-    port: 9100
+    // host: '192.168.1.229',
+    // port: 9100
 };
 
 const dymoServices = DymoServices(config);
