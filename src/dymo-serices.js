@@ -98,7 +98,8 @@ module.exports = function (cfg) {
                     .then(printers => {
                         // Use the first match for "LabelWriter 450".
                         const printer = printers.find(printer => {
-                            return printer.name && printer.name.indexOf('LabelWriter 450') !== -1
+                            // noinspection SpellCheckingInspection
+                            return printer.name && printer.name.toLowerCase().indexOf('labelwriter') !== -1
                         });
                         if (!printer) {
                             reject('Cannot find Dymo LabelWriter. Try to configure manually.');
@@ -302,7 +303,7 @@ function listPrintersMacLinux() {
     return new Promise((resolve, reject) => {
         systemServices.execute("lpstat", ["-e"])
             .then(stdout => {
-                resolve(stdout
+                const printers = stdout
                     .split('\n')
                     .filter(row => !!row.trim())
                     .map(row => {
@@ -310,7 +311,32 @@ function listPrintersMacLinux() {
                             deviceId: row.trim(),
                             name: row.replace(/_+/g, ' ').trim(),
                         }
-                    }));
+                    });
+
+                // Try to find the name ("Description:") of every printer found.
+                /** @type {Promise[]} */
+                const promises = [];
+                printers.forEach(printer => {
+                    promises.push(systemServices.execute("lpstat", ["-l", "-p", printer.deviceId]));
+                });
+
+                // Update the name for every printer description found.
+                Promise.allSettled(promises)
+                    .then((results) => {
+                        results.forEach((result, idx) => {
+                            if (result.status === 'fulfilled' && result.value) {
+                                const description = result.value
+                                    .split('\n')
+                                    .filter(line => /^description:/gi.test(line.trim()))
+                                    .map(line => line.replace(/description:/gi, '').trim())
+                                    .find(line => !!line);
+                                if (description) {
+                                    printers[idx].name = description;
+                                }
+                            }
+                        });
+                        resolve(printers);
+                    });
             })
             .catch(reject);
     });

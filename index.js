@@ -1,15 +1,6 @@
 const DymoServices = require('./src/dymo-serices');
 const imageServices = require('./src/image-services');
 
-const config = {
-    // interface: 'NETWORK',
-    // host: '169.254.25.51',
-    // host: '192.168.1.229',
-    // port: 9100
-};
-
-const dymoServices = DymoServices(config);
-
 
 // Dymo 99010 labels S0722370 compatible , 89mm x 28mm (3.5inch x 1.1inch, 300dpi).
 
@@ -38,9 +29,17 @@ const labels = [
     image.rotate(-90, true)
     const bitmap = await imageServices.convertImageToBitmapBuffer(image);
 
+    const config = {
+        // interface: 'NETWORK',
+        // host: '169.254.25.51',
+        // host: '192.168.1.229',
+        // port: 9100
+    };
+    const dymoServices = DymoServices(config);
     dymoServices.print(bitmap)
-        .then(() => {
-            console.log('Successfully printed');
+    // dymoServices.listPrinters()
+        .then(result => {
+            console.log('Successfully printed: ' + JSON.stringify(result, null, 2));
         })
         .catch(error => {
             console.error('Error: ' + error);
