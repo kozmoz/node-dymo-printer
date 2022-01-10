@@ -26,7 +26,7 @@ const labels = [
     image.write(__dirname + '/image.png');
 
     // Rotate image for label writer.
-    image.rotate(-90, true)
+    image.rotate(-90, true);
     const bitmap = await imageServices.convertImageToBitmapBuffer(image);
 
     const config = {
@@ -35,7 +35,7 @@ const labels = [
         // host: '192.168.1.229',
         // port: 9100
     };
-    const dymoServices = DymoServices(config);
+    const dymoServices = new DymoServices(config);
     dymoServices.print(bitmap)
     // dymoServices.listPrinters()
         .then(result => {
