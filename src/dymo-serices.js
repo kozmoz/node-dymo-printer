@@ -99,7 +99,7 @@ module.exports = function (cfg) {
                         // Use the first match for "LabelWriter 450".
                         const printer = printers.find(printer => {
                             // noinspection SpellCheckingInspection
-                            return printer.name && printer.name.toLowerCase().indexOf('labelwriter') !== -1
+                            return printer.name && printer.name.toLowerCase().indexOf('dymo') !== -1;
                         });
                         if (!printer) {
                             reject('Cannot find Dymo LabelWriter. Try to configure manually.');
