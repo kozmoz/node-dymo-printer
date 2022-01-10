@@ -1,6 +1,6 @@
 const systemServices = require('./system-services');
-const net = require("net");
-const fs = require("fs");
+const net = require('net');
+const fs = require('fs');
 const crypto = require('crypto');
 const os = require('os');
 const path = require('path');
@@ -22,18 +22,42 @@ const CMD_NO_DOT_TAB = Buffer.from([0x1b, 'B'.charCodeAt(0), 0]);
 // https://download.dymo.com/dymo/technical-data-sheets/LW%20450%20Series%20Technical%20Reference.pdf
 const CMD_START_ESC = Buffer.from(new Array(313).fill(0x1b));
 
-const IS_WINDOWS = process.platform === "win32";
-const IS_MACOS = process.platform === "darwin";
-const IS_LINUX = process.platform === "linux";
+const IS_WINDOWS = process.platform === 'win32';
+const IS_MACOS = process.platform === 'darwin';
+const IS_LINUX = process.platform === 'linux';
+
+// Dymo 99010 labels S0722370 compatible , 89mm x 28mm (3.5inch x 1.1inch, 300dpi).
+const DYMO_LABELS = [
+    {
+        title: '89mm x 28mm',
+        imageWidth: 1050,
+        imageHeight: 330
+    },
+    {
+        title: '89mm x 36mm',
+        imageWidth: 1050,
+        imageHeight: 426
+    }
+];
 
 
-module.exports = function (cfg) {
+/**
+ * Create service that connects to configured DYMO LabelWriter.
+ * If no configuration found, try to find the DYMO printer. First one found is used.
+ *
+ * @param {{interface:string,host?:string,port?:number,deviceId?:string}} [cfg] Optional printer configuration
+ * @return {{print: (function(number[][]): Promise<unknown>), listPrinters: ((function(): Promise<{deviceId: string, name: string}[]>)|*),
+ * DYMO_LABELS: [{imageWidth: number, title: string, imageHeight: number},{imageWidth: number, title: string, imageHeight: number}]}}
+ */
+module.exports = function (cfg = undefined) {
 
     const config = {};
     const chunks = [];
 
-    Object.assign(config, cfg);
-    validateConfig(config);
+    if (cfg) {
+        Object.assign(config, cfg);
+        validateConfig(config);
+    }
 
     /**
      * Initialize the buffer and the printer configuration.
@@ -57,7 +81,7 @@ module.exports = function (cfg) {
         // <esc> D n Set Bytes per Line
         // This command reduces the number of bytes sent for each line.
         // E.g. 332 pixels (will be 336 dots, 42 * 8).
-        const labelLineWidthBytes = Math.ceil(labelLineWidth / 8)
+        const labelLineWidthBytes = Math.ceil(labelLineWidth / 8);
         append(Buffer.from([0x1b, 'D'.charCodeAt(0), labelLineWidthBytes]));
 
         // At power up, the label length variable is set to a default value of 3058 (in 300ths of an inch units),
@@ -183,7 +207,7 @@ module.exports = function (cfg) {
         append(CMD_FORM_FEED);
 
         return sendDataToPrinter();
-    }
+    };
 
     /**
      * List all available system printers.
@@ -195,21 +219,22 @@ module.exports = function (cfg) {
             return Promise.reject('Cannot list printers, unsupported operating system: ' + process.platform);
         }
         if (IS_WINDOWS) {
-            return listPrintersWindows()
+            return listPrintersWindows();
         }
         if (IS_MACOS || IS_LINUX) {
-            return listPrintersMacLinux()
+            return listPrintersMacLinux();
         }
-    }
+    };
 
     /**
-     * Public functions.
+     * Public functions and constants.
      */
     return {
         print,
-        listPrinters
+        listPrinters,
+        DYMO_LABELS
     };
-}
+};
 
 /**
  * Validate the configuration.
@@ -301,7 +326,8 @@ function sendDataToWindowsPrinter(config, buffer) {
  */
 function listPrintersMacLinux() {
     return new Promise((resolve, reject) => {
-        systemServices.execute("lpstat", ["-e"])
+        // noinspection SpellCheckingInspection
+        systemServices.execute('lpstat', ['-e'])
             .then(stdout => {
                 const printers = stdout
                     .split('\n')
@@ -310,14 +336,15 @@ function listPrintersMacLinux() {
                         return {
                             deviceId: row.trim(),
                             name: row.replace(/_+/g, ' ').trim(),
-                        }
+                        };
                     });
 
                 // Try to find the name ("Description:") of every printer found.
                 /** @type {Promise[]} */
                 const promises = [];
                 printers.forEach(printer => {
-                    promises.push(systemServices.execute("lpstat", ["-l", "-p", printer.deviceId]));
+                    // noinspection SpellCheckingInspection
+                    promises.push(systemServices.execute('lpstat', ['-l', '-p', printer.deviceId]));
                 });
 
                 // Update the name for every printer description found.
@@ -349,9 +376,9 @@ function listPrintersMacLinux() {
  */
 function listPrintersWindows() {
     return new Promise((resolve, reject) => {
-        systemServices.execute("Powershell.exe", [
-            "-Command",
-            "Get-CimInstance Win32_Printer -Property DeviceID,Name"
+        systemServices.execute('Powershell.exe', [
+            '-Command',
+            'Get-CimInstance Win32_Printer -Property DeviceID,Name'
         ])
             .then(stdout => {
                 resolve(stdoutHandler(stdout));
@@ -363,7 +390,7 @@ function listPrintersWindows() {
 /**
  * Parse "Get-CimInstance Win32_Printer" output.
  *
- * @param stdout Process outpu;t
+ * @param stdout Process output
  * @return {{deviceId:string,name:string}[]} List of printers or empty list
  */
 function stdoutHandler(stdout) {
@@ -385,15 +412,16 @@ function stdoutHandler(stdout) {
 
 function isValidPrinter(printer) {
     const printerData = {
-        deviceId: "",
-        name: "",
+        deviceId: '',
+        name: '',
     };
 
     const isValid = printer.split(/\r?\n/).some((line) => {
-        const [label, value] = line.split(":").map((el) => el.trim());
+        const [label, value] = line.split(':').map((el) => el.trim());
         const lowerLabel = label.toLowerCase();
-        if (lowerLabel === "deviceid") printerData.deviceId = value;
-        if (lowerLabel === "name") printerData.name = value;
+        // noinspection SpellCheckingInspection
+        if (lowerLabel === 'deviceid') printerData.deviceId = value;
+        if (lowerLabel === 'name') printerData.name = value;
         return !!(printerData.deviceId && printerData.name);
     });
 

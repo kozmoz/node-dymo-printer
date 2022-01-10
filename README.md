@@ -1,55 +1,42 @@
-#Sitedish Order Management
+#node-dymo-printer
 
-Manage Sitedish orders. See live orders, get notified and manage the delivery times.
+Write to Dymo LabelWriter.
+No SDK or OS driver necessary. 
 
 
 ## Prerequisites ##
 
-- [Node](http://www.nodejs.org) v >= 6
-- NPM v >= 3
+- [Node](http://www.nodejs.org) v >= 12
+- NPM v >= 6
 
 
 ### Initialise
 
-First install all required libraries of both the mail app and sub app and build the Angular app.
+First install all required libraries.
 
 1. run `npm install`
 2run `npm run build`
 
 
-### Development
+### Demo
 
-Run `npm run serve`
-
-This will start the electron app in development mode
-and starts the webpack build in watch develop mode.
-
-To view the changes within the electron app, it needs a refresh (cmd-R).
+Run `node index.js`
 
 
 ### Unit Tests
 
-Run `npm test` for a single unit test run for both backend (NodeJS) and frontend (AngularJS).
-
-- Run `npm run test-node` to start only the backend (NodeJS) tests
-- Run `npm run test-ng` to start only the frontend (AngularJS) tests
-- Run `npm run test-ng-single-run` to start only the frontend for a single run
-
-
-### Create Distribution
-
-Run `npm run build`
-
-This creates binary packages for MacOS and Linux in the `dist` folder.
+Run `npm test` for unit tests.
 
 
 ## Dependencies
 
-Most dependencies will be obvious, here a list with the less obvious libraries:
-
-    * `unorm`: Used to remove unicode we cannot print, also a requirement of the npm `node-thermal-printer`.     
+* `jimp`: An image processing library for Node written entirely in JavaScript, with zero native dependencies.     
 
 
-## Resources for Learning Electron
 
-- [electron.atom.io/docs](http://electron.atom.io/docs) - all of Electron's documentation
+Tested in Windows 10, macOS 11.6 and Ubuntu 21.4
+
+DYMO LabelWriter 450
+
+
+

@@ -1,14 +1,14 @@
-const {spawn} = require("child_process");
+const {spawn} = require('child_process');
 
 /**
  * Execute the given command spawned as new process.
  *
  * @param {string} command Command to execute
- * @param {string[]} commandArgs Command arguments.
+ * @param {string[]} [commandArgs] Command arguments.
  * @param {Buffer} [buffer] Buffer to send (optional)
  * @return {Promise<string>}
  */
-exports.execute = (command, commandArgs = [], buffer) => {
+exports.execute = (command, commandArgs = [], buffer = undefined) => {
     return new Promise((resolve, reject) => {
 
         if (!command) {
@@ -24,28 +24,31 @@ exports.execute = (command, commandArgs = [], buffer) => {
 
         const stdout = [];
         const stderr = [];
-        proces.on("exit", function (code) {
+        proces.on('exit', function (code) {
             if (code === 0) {
                 if (stderr.length > 0) {
-                    console.warn(`Process exited successfully, but wrote to error console: ${stderr.join('')}`)
+                    console.warn(`Process exited successfully, but wrote to error console: ${stderr.join('')}`);
                 }
                 resolve(stdout.join(''));
                 return;
             }
             reject(`child process exited with code ${code}: \n${stderr.join('')}\n${stdout.join('')}`);
         });
-        proces.on("error", function (code, signal) {
-            reject("child process error with " + `code ${code} and signal ${signal}`);
+        proces.on('error', function (code, signal) {
+            reject(`child process error with code ${code} and signal ${signal}`);
         });
-        proces.stdin.on("error", error => {
-            reject("stdin process error: " + error);
+        proces.stdin.on('error', error => {
+            reject(`stdin process error: ${error}`);
         });
 
-        proces.stdout.on("data", data => stdout.push(data));
-        proces.stderr.on("data", data => stderr.push(data));
+        proces.stdout.on('data', data => stdout.push(data));
+        proces.stderr.on('data', data => stderr.push(data));
 
         if (buffer) {
-            proces.stdin.setEncoding('binary');
+            // noinspection JSUnresolvedVariable
+            if (proces.stdin.setEncoding) {
+                proces.stdin.setEncoding('binary');
+            }
             proces.stdin.write(buffer);
         }
         proces.stdin.end();
