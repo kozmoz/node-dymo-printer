@@ -1,7 +1,11 @@
-#node-dymo-printer
+# node-dymo-printer
 
-Write to Dymo LabelWriter.
-No SDK or OS driver necessary. 
+A library to print labels from Node.js. Pure javascript cross-platform with no platform specific dependencies. 
+There is no need to install the DYMO SDK or DYMO Webservices.
+
+It has been tested to work on Windows 10, macOS Big Sur 11.6 and Ubuntu 21.10.
+
+Developed for the DYMO LabelWriter 450, but might also work for other models.
 
 
 ## Prerequisites ##
@@ -10,33 +14,32 @@ No SDK or OS driver necessary.
 - NPM v >= 6
 
 
-### Initialise
+### Initialize
 
-First install all required libraries.
+First install the required libraries.
 
-1. run `npm install`
-2run `npm run build`
+`$ npm install`
 
 
-### Demo
+### Demos
 
-Run `node index.js`
+The first demo tries to find the label printer and prints "Hello world!"
+
+`$ node demo1.js`
 
 
 ### Unit Tests
 
-Run `npm test` for unit tests.
+`$ npm test`
 
 
-## Dependencies
+## References and remarks
 
-* `jimp`: An image processing library for Node written entirely in JavaScript, with zero native dependencies.     
+For image processing, this library makes use of `jimp`: An image processing library for Node written entirely in JavaScript, with zero native dependencies.
 
+For Windows, it uses an executable named `RawPrint.exe` to write directly to a printer bypassing the printer driver. 
+For details about this project, see [RawPrint](https://github.com/frogmorecs/RawPrint) 
 
+The source code to list all printers in Windows, is borrowed from this project: [pdf-to-printer](https://github.com/artiebits/pdf-to-printer)
 
-Tested in Windows 10, macOS 11.6 and Ubuntu 21.4
-
-DYMO LabelWriter 450
-
-
-
+DYMO LabelWriter 450 Series Printers Technical Reference Manual: https://download.dymo.com/dymo/technical-data-sheets/LW%20450%20Series%20Technical%20Reference.pdf
