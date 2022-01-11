@@ -1,4 +1,4 @@
-const DymoServices = require('./src/dymo-serices');
+const DymoServices = require('./src/dymo-services');
 const imageServices = require('./src/image-services');
 
 /**

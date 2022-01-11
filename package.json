@@ -1,18 +1,31 @@
 {
-  "name": "dymo-printer",
-  "version": "1.0.0",
-  "description": "",
+  "name": "node-dymo-printer",
+  "version": "0.1.1",
+  "description": "A library to print labels from Node.js. Pure javascript cross-platform with no platform specific dependencies.",
+  "homepage": "https://github.com/kozmoz/node-dymo-printer",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "bin": {
+    "node-dymo-printer": "./bin/node-dymo-printer"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kozmoz/node-dymo-printer.git"
+  },
+  "keywords": [
+    "DYMO",
+    "LabelWriter",
+    "DYMO LabelWriter 450"
+  ],
+  "author": "Rob Juurlink",
   "license": "ISC",
   "dependencies": {
+    "cli": "1.0.1",
     "jimp": "0.16.1"
   },
   "devDependencies": {
-    "@types/node": "^17.0.7"
+    "@types/node": "17.0.7"
   }
 }

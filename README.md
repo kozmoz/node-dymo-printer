@@ -23,7 +23,7 @@ First install the required libraries.
 
 ### Demos
 
-The first demo tries to find the label printer and prints "Hello world!"
+The first demo tries to find the DYMO label printer automatically and prints "Hello world!".
 
 `$ node demo1.js`
 
@@ -35,7 +35,7 @@ The first demo tries to find the label printer and prints "Hello world!"
 
 ## References and remarks
 
-For image processing, this library makes use of `jimp`: An image processing library for Node written entirely in JavaScript, with zero native dependencies.
+For image processing, this library makes use of [Jimp](https://github.com/oliver-moran/jimp). An image processing library for Node written entirely in JavaScript, with zero native dependencies.
 
 For Windows, it uses an executable named `RawPrint.exe` to write directly to a printer bypassing the printer driver. 
 For details about this project, see [RawPrint](https://github.com/frogmorecs/RawPrint) 

@@ -1,18 +1,15 @@
+const Jimp = require('jimp');
 const DymoServices = require('./src/dymo-services');
 const imageServices = require('./src/image-services');
 
 /**
- * Try to find the DYMO LabelWriter and print "Hello World!" on a 89mm x 36mm label.
+ * Try to find the DYMO LabelWriter and print given image (image is sized for a 89mm x 36mm label).
  */
 
 (async function () {
 
     const dymoServices = new DymoServices();
-
-    const {imageWidth, imageHeight} = dymoServices.DYMO_LABELS[1];
-    const image = await imageServices.createImageWithText(imageWidth, imageHeight, 50, 128, 'Hello World!');
-
-    image.write(__dirname + '/image1.png');
+    const image = await Jimp.read(__dirname + '/demo4.png');
 
     // Rotate image for label writer.
     image.rotate(-90, true);
