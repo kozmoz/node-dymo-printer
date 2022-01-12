@@ -1,10 +1,7 @@
 {
   // https://github.com/airbnb/javascript/blob/master/linters/.jshintrc
 
-  /*
-   * ENVIRONMENTS
-   * =================
-   */
+  // ENVIRONMENTS
 
   // Define globals exposed by modern browsers.
   "browser": true,
@@ -16,7 +13,7 @@
   "node": true,
 
   // Allow ES6.
-  "esversion": 9,
+  "esversion": 6,
 
   /*
    * ENFORCING OPTIONS
@@ -25,7 +22,7 @@
 
   // Force all variable names to use either camelCase style or UPPER_CASE
   // with underscores.
-  "camelcase": false,
+  "camelcase": true,
 
   // Prohibit use of == and != in favor of === and !==.
   "eqeqeq": true,
@@ -34,9 +31,9 @@
   "indent": 2,
 
   // Prohibit use of a variable before it is defined.
-  "latedef": false,
+  "latedef": true,
 
-  // Enforce line length to 140 characters
+  // Enforce line length to 150 characters
   "maxlen": 150,
 
   // Require capitalized names for constructor functions.

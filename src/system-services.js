@@ -1,4 +1,4 @@
-const {spawn} = require('child_process');
+import {spawn} from 'child_process';
 
 /**
  * Execute the given command spawned as new process.
@@ -8,7 +8,7 @@ const {spawn} = require('child_process');
  * @param {Buffer} [buffer] Buffer to send (optional)
  * @return {Promise<string>}
  */
-exports.execute = (command, commandArgs = [], buffer = undefined) => {
+export function execute(command, commandArgs = [], buffer = undefined) {
     return new Promise((resolve, reject) => {
 
         if (!command) {
@@ -53,4 +53,5 @@ exports.execute = (command, commandArgs = [], buffer = undefined) => {
         }
         proces.stdin.end();
     });
-};
+}
+

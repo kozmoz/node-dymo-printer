@@ -1,124 +1,8 @@
-const Jimp = require('jimp');
+import Jimp from 'jimp';
 
 // Supported font sizes (in pixels).
 const FONT_SIZES = [8, 10, 12, 14, 16, 32, 64, 128];
 
-/**
- * Create the image for the label.
- *
- * @param imageWidth Image width in pixels
- * @param imageHeight Image height in pixels
- * @param horizontalMargin Margin left and right for the text (it's not added to the total image width)
- * @param {number} fontSize Size of the font; 8,10,12,14,16,32,64 or 128 pixels.
- * @param {string} text Text to print
- * @return {Promise<Jimp>}
- */
-exports.createImageWithText = (imageWidth, imageHeight, horizontalMargin, fontSize, text) => {
-    return new Promise((resolve, reject) => {
-
-        // Test parameters.
-        if (!imageWidth || imageWidth < 0 || !Number.isInteger(imageWidth)) {
-            throw Error(`createImage(): imageWidth should be a positive integer: "${imageWidth}"`);
-        }
-        if (!imageHeight || imageHeight < 0 || !Number.isInteger(imageHeight)) {
-            throw Error(`createImage(): imageHeight should be a positive integer: : "${imageHeight}"`);
-        }
-        if (horizontalMargin < 0 || !Number.isInteger(horizontalMargin)) {
-            throw Error(`createImage(): horizontalMargin should be positive integer or 0: "${horizontalMargin}"`);
-        }
-        if (!fontSize || FONT_SIZES.indexOf(fontSize) === -1) {
-            throw Error(`createImage(): invalid font size: "${fontSize}"`);
-        }
-        if (!text) {
-            throw Error(`createImage(): Empty text, nothing to print.`);
-        }
-        if (typeof text !== 'string') {
-            throw Error(`createImage(): Text should be of type string.`);
-        }
-
-        new Jimp(imageWidth, imageHeight, '#FFFFFF', (err, image) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-
-            Jimp.loadFont(Jimp[`FONT_SANS_${fontSize}_BLACK`])
-                .then(font => {
-
-                    const maxTextWidth = image.bitmap.width - 2 * horizontalMargin;
-                    const maxTextHeight = image.bitmap.height;
-                    const textObj = {
-                        // Simulate newlines.
-                        text: simulateNewlines(font, maxTextWidth, text),
-                        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
-                        alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE
-                    };
-                    // Print text.
-                    // noinspection JSUnresolvedFunction
-                    image.print(font, horizontalMargin, 0, textObj, maxTextWidth, maxTextHeight);
-
-                    resolve(image);
-                })
-                .catch(reject);
-        });
-    });
-};
-
-/**
- * Create bitmap from Jimp image object.
- *
- * @param {Jimp} image Jimp image object
- * @return {Promise<number[][]>} Bitmap buffer array
- */
-exports.convertImageToBitmap = (image) => {
-    return new Promise((resolve) => {
-
-        if (!image) {
-            throw Error('convertImageToBitmapBuffer(): parameter image is required');
-        }
-        if (!image.scan) {
-            throw Error('convertImageToBitmapBuffer(): parameter image should be of type Jimp image');
-        }
-
-        // Convert to black- and white image.
-        // noinspection JSUnresolvedFunction
-        const bwImage = image
-            .clone()
-            .opaque()
-            .greyscale()
-            .brightness(0.3)
-            .dither565()
-            .posterize(2);
-
-        const bitmap = [];
-
-        // Helper method is available to scan a region of the bitmap:
-        // image.scan(x, y, w, h, f); // scan a given region of the bitmap and call the function f on every pixel
-        bwImage.scan(0, 0, bwImage.bitmap.width, bwImage.bitmap.height, (x, y, idx) => {
-            // x, y is the position of this pixel on the image.
-            // idx is the position start position of this rgba tuple in the bitmap Buffer.
-
-            // Add new empty row.
-            if (bitmap.length <= y) {
-                const bytes = Math.ceil(bwImage.bitmap.width / 8);
-                bitmap.push(new Array(bytes).fill(0));
-            }
-
-            // The image is posterized, so we only have to check the "red" channel.
-            const black = (bwImage.bitmap.data[idx] < 50);
-            if (black) {
-                const row = bitmap[y];
-                // Set the right bit.
-                // Pixels from left to right, but bits from right to left. Translate this.
-                const byteIndex = Math.floor(x / 8);
-                // Set bits from left to right.
-                row[byteIndex] = setBit(row[byteIndex], [7, 6, 5, 4, 3, 2, 1, 0][x % 8]);
-            }
-        }, function () {
-            resolve(bitmap);
-        });
-    });
-};
 
 /**
  * Set the bit of given value.
@@ -170,3 +54,119 @@ function simulateNewlines(font, maxTextWidth, text) {
     return texts.join('');
 }
 
+/**
+ * Create the image for the label.
+ *
+ * @param imageWidth Image width in pixels
+ * @param imageHeight Image height in pixels
+ * @param horizontalMargin Margin left and right for the text (it's not added to the total image width)
+ * @param {number} fontSize Size of the font; 8,10,12,14,16,32,64 or 128 pixels.
+ * @param {string} text Text to print
+ * @return {Promise<Jimp>}
+ */
+export function createImageWithText (imageWidth, imageHeight, horizontalMargin, fontSize, text) {
+    return new Promise((resolve, reject) => {
+
+        // Test parameters.
+        if (!imageWidth || imageWidth < 0 || !Number.isInteger(imageWidth)) {
+            throw Error(`createImage(): imageWidth should be a positive integer: "${imageWidth}"`);
+        }
+        if (!imageHeight || imageHeight < 0 || !Number.isInteger(imageHeight)) {
+            throw Error(`createImage(): imageHeight should be a positive integer: : "${imageHeight}"`);
+        }
+        if (horizontalMargin < 0 || !Number.isInteger(horizontalMargin)) {
+            throw Error(`createImage(): horizontalMargin should be positive integer or 0: "${horizontalMargin}"`);
+        }
+        if (!fontSize || FONT_SIZES.indexOf(fontSize) === -1) {
+            throw Error(`createImage(): invalid font size: "${fontSize}"`);
+        }
+        if (!text) {
+            throw Error(`createImage(): Empty text, nothing to print.`);
+        }
+        if (typeof text !== 'string') {
+            throw Error(`createImage(): Text should be of type string.`);
+        }
+
+        new Jimp(imageWidth, imageHeight, '#FFFFFF', (err, image) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+
+            Jimp.loadFont(Jimp[`FONT_SANS_${fontSize}_BLACK`])
+                .then(font => {
+
+                    const maxTextWidth = image.bitmap.width - 2 * horizontalMargin;
+                    const maxTextHeight = image.bitmap.height;
+                    const textObj = {
+                        // Simulate newlines.
+                        text: simulateNewlines(font, maxTextWidth, text),
+                        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
+                        alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE
+                    };
+                    // Print text.
+                    // noinspection JSUnresolvedFunction
+                    image.print(font, horizontalMargin, 0, textObj, maxTextWidth, maxTextHeight);
+
+                    resolve(image);
+                })
+                .catch(reject);
+        });
+    });
+}
+
+/**
+ * Create bitmap from Jimp image object.
+ *
+ * @param {Jimp} image Jimp image object
+ * @return {Promise<number[][]>} Bitmap buffer array
+ */
+export function convertImageToBitmap(image) {
+    return new Promise((resolve) => {
+
+        if (!image) {
+            throw Error('convertImageToBitmapBuffer(): parameter image is required');
+        }
+        if (!image.scan) {
+            throw Error('convertImageToBitmapBuffer(): parameter image should be of type Jimp image');
+        }
+
+        // Convert to black- and white image.
+        // noinspection JSUnresolvedFunction
+        const bwImage = image
+            .clone()
+            .opaque()
+            .greyscale()
+            .brightness(0.3)
+            .dither565()
+            .posterize(2);
+
+        const bitmap = [];
+
+        // Helper method is available to scan a region of the bitmap:
+        // image.scan(x, y, w, h, f); // scan a given region of the bitmap and call the function f on every pixel
+        bwImage.scan(0, 0, bwImage.bitmap.width, bwImage.bitmap.height, (x, y, idx) => {
+            // x, y is the position of this pixel on the image.
+            // idx is the position start position of this rgba tuple in the bitmap Buffer.
+
+            // Add new empty row.
+            if (bitmap.length <= y) {
+                const bytes = Math.ceil(bwImage.bitmap.width / 8);
+                bitmap.push(new Array(bytes).fill(0));
+            }
+
+            // The image is posterized, so we only have to check the "red" channel.
+            const black = (bwImage.bitmap.data[idx] < 50);
+            if (black) {
+                const row = bitmap[y];
+                // Set the right bit.
+                // Pixels from left to right, but bits from right to left. Translate this.
+                const byteIndex = Math.floor(x / 8);
+                // Set bits from left to right.
+                row[byteIndex] = setBit(row[byteIndex], [7, 6, 5, 4, 3, 2, 1, 0][x % 8]);
+            }
+        }, function () {
+            resolve(bitmap);
+        });
+    });
+}

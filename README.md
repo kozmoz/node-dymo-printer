@@ -10,7 +10,7 @@ Developed for the DYMO LabelWriter 450, but might also work for other models.
 
 ## Prerequisites ##
 
-- [Node](http://www.nodejs.org) v >= 12
+- [Node](https://www.nodejs.org) v >= 12
 - NPM v >= 6
 
 
