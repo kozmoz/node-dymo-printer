@@ -13,7 +13,7 @@
   "node": true,
 
   // Allow ES6.
-  "esversion": 6,
+  "esversion": 9,
 
   /*
    * ENFORCING OPTIONS

@@ -5,13 +5,6 @@ import os from 'os';
 import path from 'path';
 import {execute} from './system-services.js';
 
-/* jshint ignore:start */
-// We're using modules, so __dirname is not defined bij Node.
-import url from 'url';
-
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
-/* jshint ignore:end */
-
 // Technical specifications Dymo LabelWriter 450.
 // https://download.dymo.com/dymo/user-guides/LabelWriter/LWSE450/LWSE450_TechnicalReference.pdf
 

@@ -2,7 +2,8 @@
 
 ### 0.2.0 - (January 11, 2022)
 
-- Improvement: Create structure for npm package.
+- Improvement: Create structure for npm package, both commonjs and ES-module compatible
+- Improvement: Updated the examples to use the npm module. 
 
 ### 0.1.1 - (January 11, 2022)
 

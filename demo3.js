@@ -1,4 +1,5 @@
-const DymoServices = require('./src/dymo-services');
+const {DymoServices} = require('node-dymo-printer');
+
 
 /**
  * Print a list of all printers found.
