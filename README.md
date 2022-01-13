@@ -29,7 +29,8 @@ Code excerpt to print a text label. <br />
 See the `demo<n>.js` files for all the details.
 
 ```Javascript
-   const dymoServices = new DymoServices();
+   // We use an empty config object, so dymoServices tries to find the label printer automagically.
+   const dymoServices = new DymoServices({});
  
    // Create landscape image with the dimensions of the label and with the text "Hello World!".
    const {imageWidth, imageHeight} = DymoServices.DYMO_LABELS[1];
