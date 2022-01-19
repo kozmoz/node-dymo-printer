@@ -64,7 +64,7 @@ function simulateNewlines(font, maxTextWidth, text) {
  * @param {string} text Text to print
  * @return {Promise<Jimp>}
  */
-export function createImageWithText (imageWidth, imageHeight, horizontalMargin, fontSize, text) {
+export function createImageWithText(imageWidth, imageHeight, horizontalMargin, fontSize, text) {
     return new Promise((resolve, reject) => {
 
         // Test parameters.
@@ -118,7 +118,7 @@ export function createImageWithText (imageWidth, imageHeight, horizontalMargin, 
 /**
  * Create bitmap from Jimp image object.
  *
- * @param {Jimp} image Jimp image object
+ * @param {Jimp} image Jimp image object (image will be manipulated)
  * @return {Promise<number[][]>} Bitmap buffer array
  */
 export function convertImageToBitmap(image) {
@@ -134,7 +134,6 @@ export function convertImageToBitmap(image) {
         // Convert to black- and white image.
         // noinspection JSUnresolvedFunction
         const bwImage = image
-            .clone()
             .opaque()
             .greyscale()
             .brightness(0.3)
@@ -170,3 +169,45 @@ export function convertImageToBitmap(image) {
         });
     });
 }
+
+/**
+ * Convenient function to load image.
+ *
+ * @param {string|Buffer|Jimp} arg Path, URL, Buffer or Jimp image
+ * @return {Promise<Jimp>} Promise which resolves with image when successfully loaded, rejects with error otherwise
+ */
+export function loadImage(arg) {
+    return Jimp.read(arg);
+}
+
+/**
+ * Because Jimp contains a bug rotating the image, we have to crop te image after rotation to keep the same width and height.
+ *
+ * @param {Jimp} image Image to rotate
+ * @return {Jimp} New rotated image
+ */
+export function rotateImage90DegreesCounterClockwise(image) {
+
+    if (!image) {
+        throw Error('rotateImage90DegreesCounterClockwise(): parameter image is required');
+    }
+    if (!image.rotate) {
+        throw Error('rotateImage90DegreesCounterClockwise(): parameter image should be of type Jimp image');
+    }
+
+    // Rotate image for label writer. Needs to be in portrait mode for printing.
+    const clonedImage = image.clone();
+    const previousWidth = clonedImage.bitmap.width;
+    const previousHeight = clonedImage.bitmap.height;
+
+    clonedImage.rotate(-90, true);
+
+    // Fix for: when rotated, the width and height of pic gets larger #808
+    // https://github.com/oliver-moran/jimp/issues/808
+    if (clonedImage.bitmap.width !== previousHeight || clonedImage.bitmap.height !== previousWidth) {
+        // Crop to original size.
+        clonedImage.crop(1, 0, previousHeight, previousWidth);
+    }
+    return clonedImage;
+}
+

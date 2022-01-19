@@ -1,5 +1,9 @@
 # Changes to node-dymo-printer
 
+### 0.4.0 - (January 19, 2022)
+
+-  API change: Removed the necessary step to convert to bitmap first. Now prints image immediately.
+
 ### 0.3.0 - (January 19, 2022)
 
 - Improvement: Added extra parameter "printCount" to print() function. It's optional and defaults to 1.

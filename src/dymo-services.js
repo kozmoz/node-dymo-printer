@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
 import {execute} from './system-services.js';
+import {convertImageToBitmap, rotateImage90DegreesCounterClockwise} from './image-services.js';
 
 // Technical specifications Dymo LabelWriter 450.
 // https://download.dymo.com/dymo/user-guides/LabelWriter/LWSE450/LWSE450_TechnicalReference.pdf
@@ -87,15 +88,56 @@ export class DymoServices {
         }
     }
 
+    // noinspection JSValidateJSDoc
     /**
+     * Print the image.
+     * The size of the image should match the size of the label.
+     *
+     * @param {Jimp} image image object in landscape orientation
+     * @param {number} [printCount] Number of prints (defaults to 1)
+     * @return Promise<void> Resolves in case of success, rejects otherwise
+     */
+    print(image, printCount = 1) {
+        return new Promise((resolve, reject) => {
+            const rotatedImage = rotateImage90DegreesCounterClockwise(image);
+            convertImageToBitmap(rotatedImage)
+                .then(bitmapImageBuffer => {
+                    this.printBitmap(bitmapImageBuffer, printCount)
+                        .then(resolve)
+                        .catch(reject);
+                })
+                .catch(reject);
+        });
+    }
+
+    /**
+     * List all available system printers.
+     *
+     * @return {Promise<{deviceId:string,name:string}[]>} List of printers or empty list
+     */
+    listPrinters() {
+        if (!IS_WINDOWS && !IS_MACOS && !IS_LINUX) {
+            return Promise.reject('Cannot list printers, unsupported operating system: ' + process.platform);
+        }
+        if (IS_WINDOWS) {
+            return DymoServices.listPrintersWindows();
+        }
+        if (IS_MACOS || IS_LINUX) {
+            return DymoServices.listPrintersMacLinux();
+        }
+    }
+
+    /**
+     * @private
+     *
      * Print the bitmap image buffer.
      * The size of the image should match the size of the label.
      *
-     * @param {number[][]} imageBuffer Bitmap image array, lines and rows
-     * @param {number} printCount Number of prints
+     * @param {number[][]} imageBuffer Bitmap image array, lines and rows in portrait orientation
+     * @param {number} [printCount] Number of prints
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    print(imageBuffer, printCount = 1) {
+    printBitmap(imageBuffer, printCount = 1) {
         if (!imageBuffer || imageBuffer.length === 0) {
             throw Error('Empty imageBuffer, cannot print');
         }
@@ -122,23 +164,6 @@ export class DymoServices {
         }
 
         return this.sendDataToPrinter();
-    }
-
-    /**
-     * List all available system printers.
-     *
-     * @return {Promise<{deviceId:string,name:string}[]>} List of printers or empty list
-     */
-    listPrinters() {
-        if (!IS_WINDOWS && !IS_MACOS && !IS_LINUX) {
-            return Promise.reject('Cannot list printers, unsupported operating system: ' + process.platform);
-        }
-        if (IS_WINDOWS) {
-            return DymoServices.listPrintersWindows();
-        }
-        if (IS_MACOS || IS_LINUX) {
-            return DymoServices.listPrintersMacLinux();
-        }
     }
 
     /**
@@ -506,6 +531,6 @@ export class DymoServices {
 }
 
 // Make those imageService functions available via this file.
-export {createImageWithText, convertImageToBitmap} from './image-services.js';
+export {createImageWithText, loadImage} from './image-services.js';
 
 

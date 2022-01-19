@@ -1,6 +1,6 @@
 {
   "name": "node-dymo-printer",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A library to print labels from Node.js. Pure javascript cross-platform with no platform specific dependencies.",
   "homepage": "https://github.com/kozmoz/node-dymo-printer",
   "main": "dist/cjs/index.js",
