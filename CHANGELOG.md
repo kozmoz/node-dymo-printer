@@ -1,9 +1,13 @@
 # Changes to node-dymo-printer
 
+### 0.3.0 - (January 19, 2022)
+
+- Improvement: Added extra parameter "printCount" to print() function. It's optional and defaults to 1.
+
 ### 0.2.0 - (January 11, 2022)
 
 - Improvement: Create structure for npm package, both commonjs and ES-module compatible
-- Improvement: Updated the examples to use the npm module. 
+- Improvement: Updated the examples to use the npm module.
 
 ### 0.1.1 - (January 11, 2022)
 

@@ -8,9 +8,13 @@ import {execute} from './system-services.js';
 // Technical specifications Dymo LabelWriter 450.
 // https://download.dymo.com/dymo/user-guides/LabelWriter/LWSE450/LWSE450_TechnicalReference.pdf
 
+// Returns the printer to its power-up condition, clears all buffers, and resets all character attributes.
+// The ESC @ command is the same as the ESC * command.
 const CMD_RESET = Buffer.from([0x1b, '*'.charCodeAt(0)]);
-// This command advances the most recently printed label to a position where it can be torn off.
-const CMD_FORM_FEED = Buffer.from([0x1b, 'E'.charCodeAt(0)]);
+// Feed to Tear Position. This command advances the most recently printed label to a position where it can be torn off.
+const CMD_FULL_FORM_FEED = Buffer.from([0x1b, 'E'.charCodeAt(0)]);
+// Feed to Print Head. Use this command when printing multiple labels.
+const CMD_SHORT_FORM_FEED = Buffer.from([0x1b, 'G'.charCodeAt(0)]);
 const CMD_TEXT_SPEED_MODE = Buffer.from([0x1b, 'h'.charCodeAt(0)]);
 const CMD_DENSITY_NORMAL = Buffer.from([0x1b, 'e'.charCodeAt(0)]);
 const CMD_NO_DOT_TAB = Buffer.from([0x1b, 'B'.charCodeAt(0), 0]);
@@ -83,11 +87,15 @@ export class DymoServices {
      * The size of the image should match the size of the label.
      *
      * @param {number[][]} imageBuffer Bitmap image array, lines and rows
+     * @param {number} printCount Number of prints
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    print(imageBuffer) {
+    print(imageBuffer, printCount = 1) {
         if (!imageBuffer || imageBuffer.length === 0) {
             throw Error('Empty imageBuffer, cannot print');
+        }
+        if (printCount <= 0) {
+            throw Error(`PrintCount cannot be 0 or a negative number: ${printCount}`);
         }
 
         // Determine the label dimensions based on the bitmap image buffer.
@@ -95,13 +103,18 @@ export class DymoServices {
         const labelLength = imageBuffer.length;
         this.init(labelLineWidth, labelLength);
 
-        // Convert bitmap array to printer bitmap.
-        for (let i = 0; i < imageBuffer.length; i++) {
-            this.append(Buffer.from([0x16, ...imageBuffer[i]]));
+        for (let count = 1; count <= printCount; count++) {
+            // Convert bitmap array to printer bitmap.
+            for (let i = 0; i < imageBuffer.length; i++) {
+                this.append(Buffer.from([0x16, ...imageBuffer[i]]));
+            }
+            if (count === printCount) {
+                // End print job.
+                this.append(CMD_FULL_FORM_FEED);
+            } else {
+                this.append(CMD_SHORT_FORM_FEED);
+            }
         }
-
-        // End label feed.
-        this.append(CMD_FORM_FEED);
 
         return this.sendDataToPrinter();
     }
