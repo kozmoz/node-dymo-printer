@@ -54,6 +54,11 @@ export class DymoServices {
             title: '89mm x 36mm',
             imageWidth: 1050,
             imageHeight: 426
+        },
+        {
+            title: '54mm x 25mm',
+            imageWidth: 637,
+            imageHeight: 295
         }
     ];
 
