@@ -1,5 +1,9 @@
 # Changes to node-dymo-printer
 
+### 0.4.1 - (January 20, 2022)
+
+-  Improvement: Added support for Linux devices. E.g. /dev/usb/lp0
+
 ### 0.4.0 - (January 19, 2022)
 
 -  API change: Removed the necessary step to convert to bitmap first. Now prints image immediately.

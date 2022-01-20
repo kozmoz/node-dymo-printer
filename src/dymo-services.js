@@ -35,6 +35,11 @@ const IS_WINDOWS = process.platform === 'win32';
 const IS_MACOS = process.platform === 'darwin';
 const IS_LINUX = process.platform === 'linux';
 
+const PRINTER_INTERFACE_CUPS = 'CUPS';
+const PRINTER_INTERFACE_NETWORK = 'NETWORK';
+const PRINTER_INTERFACE_WINDOWS = 'WINDOWS';
+const PRINTER_INTERFACE_DEVICE = 'DEVICE';
+
 /**
  * Create service that connects to configured DYMO LabelWriter.
  * If no configuration found, try to find the DYMO printer. First one found is used.
@@ -68,7 +73,7 @@ export class DymoServices {
 
     /**
      * @private
-     * @type {{interface:string,host?:string,port?:number,deviceId?:string}}
+     * @type {{interface:string,host?:string,port?:number,deviceId?:string,device?:string}}
      */
     config = {};
     /**
@@ -82,7 +87,7 @@ export class DymoServices {
     /**
      * Create new DymoServices instance.
      *
-     * @param {{interface:string,host?:string,port?:number,deviceId?:string}} config Optional printer configuration
+     * @param {{interface:string,host?:string,port?:number,deviceId?:string,device:string}} config Optional printer configuration
      */
     constructor(config = undefined) {
         if (config) {
@@ -243,8 +248,8 @@ export class DymoServices {
                             reject('Cannot find Dymo LabelWriter. Try to configure manually.');
                             return;
                         }
-                        // Found a Dymo label writer, retry.
-                        this.config.interface = IS_WINDOWS ? 'WINDOWS' : 'CUPS';
+                        // Found a Dymo label writer.
+                        this.config.interface = IS_WINDOWS ? PRINTER_INTERFACE_WINDOWS : PRINTER_INTERFACE_CUPS;
                         this.config.deviceId = printer.deviceId;
                         this.sendDataToPrinter()
                             .then(resolve)
@@ -254,20 +259,26 @@ export class DymoServices {
                 return;
             }
 
-            if (printerInterface === 'NETWORK') {
-                DymoServices.sendDataToNetworkPrinter(this.config, buffer)
+            if (printerInterface === PRINTER_INTERFACE_NETWORK) {
+                DymoServices.sendDataToNetworkPrinter(buffer, this.config.host, this.config.port)
                     .then(resolve)
                     .catch(reject);
                 return;
             }
-            if (printerInterface === 'CUPS') {
-                DymoServices.sendDataToCupsPrinter(this.config, buffer)
+            if (printerInterface === PRINTER_INTERFACE_CUPS) {
+                DymoServices.sendDataToCupsPrinter(buffer, this.config.deviceId)
                     .then(resolve)
                     .catch(reject);
                 return;
             }
-            if (printerInterface === 'WINDOWS') {
-                DymoServices.sendDataToWindowsPrinter(this.config, buffer)
+            if (printerInterface === PRINTER_INTERFACE_WINDOWS) {
+                DymoServices.sendDataToWindowsPrinter(buffer, this.config.deviceId)
+                    .then(resolve)
+                    .catch(reject);
+                return;
+            }
+            if (printerInterface === PRINTER_INTERFACE_DEVICE) {
+                DymoServices.sendDataToDevicePrinter(buffer, this.config.device)
                     .then(resolve)
                     .catch(reject);
                 return;
@@ -306,7 +317,7 @@ export class DymoServices {
      * @param {{interface:string,host?:string,port?:number,deviceId?:string}} config Config object
      */
     static validateConfig(config) {
-        const INTERFACES = ['NETWORK', 'CUPS', 'WINDOWS'];
+        const INTERFACES = [PRINTER_INTERFACE_NETWORK, PRINTER_INTERFACE_CUPS, PRINTER_INTERFACE_WINDOWS, PRINTER_INTERFACE_DEVICE];
         if (config.interface && INTERFACES.indexOf(config.interface) === -1) {
             throw Error(`Invalid interface "${config.interface}", valid interfaces are: ${INTERFACES.join(', ')}`);
         }
@@ -317,17 +328,14 @@ export class DymoServices {
      *
      * Send data to network printer.
      *
-     * @param {{interface:string, host?:string, port?:number,deviceId?:string}} config Configuration
      * @param {Buffer} buffer Printer data buffer
+     * @param {string} host Hostname or IP address (defaults to localhost)
+     * @param {number} port Port number (defaults to 9100)
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    static sendDataToNetworkPrinter(config, buffer) {
+    static sendDataToNetworkPrinter(buffer, host = 'localhost', port = 9100) {
         return new Promise((resolve, reject) => {
-            const networkPrinter = net.connect({
-                host: config.host || 'localhost',
-                port: config.port || 9100,
-                timeout: 30000
-            }, function () {
+            const networkPrinter = net.connect({host, port, timeout: 30000}, function () {
                 networkPrinter.write(buffer, 'binary', () => {
                     networkPrinter.end();
                     resolve();
@@ -349,15 +357,42 @@ export class DymoServices {
     /**
      * @private
      *
-     * Send data to CUPS printer.
+     * Send data to USB (device) printer.
      *
-     * @param {{interface:string, host?:string, port?:number, deviceId?:string}} config Configuration
      * @param {Buffer} buffer Printer data buffer
+     * @param {string} device Device location /dev/usb/lp0
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    static sendDataToCupsPrinter(config, buffer) {
+    static sendDataToDevicePrinter(buffer, device) {
         return new Promise((resolve, reject) => {
-            execute('lp', ['-d', `${config.deviceId}`], buffer)
+            if (!device) {
+                throw Error('Cannot write to device, the device name is empty');
+            }
+            fs.writeFile(device, buffer, {encoding: 'binary'}, err => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve();
+            });
+        });
+    }
+
+    /**
+     * @private
+     *
+     * Send data to CUPS printer.
+     *
+     * @param {Buffer} buffer Printer data buffer
+     * @param {string} deviceId CUPS device id
+     * @return Promise<void> Resolves in case of success, rejects otherwise
+     */
+    static sendDataToCupsPrinter(buffer, deviceId) {
+        return new Promise((resolve, reject) => {
+            if (!deviceId) {
+                throw Error('Cannot print to CUPS printer, deviceId is not configured.');
+            }
+            execute('lp', ['-d', `${deviceId}`], buffer)
                 .then(resolve)
                 .catch(reject);
         });
@@ -368,18 +403,18 @@ export class DymoServices {
      *
      * Send data to Windows RAW printer.
      *
-     * @param {{interface:string, host?:string, port?:number, deviceId?:string}} config Configuration
      * @param {Buffer} buffer Printer data buffer
+     * @param {string} deviceId Windows printer device id
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    static sendDataToWindowsPrinter(config, buffer) {
+    static sendDataToWindowsPrinter(buffer, deviceId) {
         // > RawPrint "Name of Your Printer" filename
         // http://www.columbia.edu/~em36/windowsrawprint.html
         // https://github.com/frogmorecs/RawPrint
         return new Promise((resolve, reject) => {
             const tmp = DymoServices.tmpFile();
             fs.writeFileSync(tmp, buffer, {encoding: 'binary'});
-            execute(path.join(__dirname, '..', 'windows', 'RawPrint.exe'), [config.deviceId, tmp], buffer)
+            execute(path.join(__dirname, '..', 'windows', 'RawPrint.exe'), [deviceId, tmp], buffer)
                 .then(() => {
                     fs.unlinkSync(tmp);
                     resolve();

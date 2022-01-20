@@ -3,7 +3,7 @@
 A library / module to print labels from Node.js. Pure javascript cross-platform with no platform specific dependencies. There is no need to install
 the DYMO SDK or DYMO Webservices.
 
-It has been tested to work on Windows 10, macOS Big Sur 11.6 and Ubuntu 21.10.
+It has been tested to work on Windows 10, macOS (Big Sur 11.6, Monterey 12.1) and Ubuntu 21.10.
 
 Developed for the DYMO LabelWriter 450, but might also work for other models.
 
@@ -36,8 +36,37 @@ const image = await createImageWithText(imageWidth, imageHeight, 0, 128, 'Hello 
 // Print it, just one label.
 // We use an empty config object, so dymoServices tries to find the label printer automagically.
 await new DymoServices({}).print(image, 1);
-```   
-   
+```
+
+Manual printer configuration. Supported printer interfaces "NETWORK", "CUPS", "WINDOWS" and "DEVICE".
+
+```Javascript
+// Network example (Linux, Windows, macOS).
+new DymoServices({
+    interface: 'NETWORK',
+    host: '192.168.1.229',
+    port: 9100
+});
+
+// USB device example (linux).
+new DymoServices({
+    interface: 'DEVICE',
+    device: '/dev/usb/lp0'
+});
+
+// CUPS example (macOS, linux).
+new DymoServices({
+    interface: 'CUPS',
+    deviceId: 'DYMO_LabelWriter_450'
+});
+
+// Windows example.
+new DymoServices({
+    interface: 'WINDOWS',
+    deviceId: 'DYMO LabelWriter 450'
+});
+```
+
 ## References and remarks
 
 For image processing, this library makes use of [Jimp](https://github.com/oliver-moran/jimp). An image processing library for Node written entirely in
