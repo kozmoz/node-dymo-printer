@@ -30,8 +30,8 @@ See the `demo<n>.js` files for all the details.
 
 ```Javascript
 // Create landscape image with the dimensions of the label and with the text "Hello World!".
-const {imageWidth, imageHeight} = DymoServices.DYMO_LABELS[1];
-const image = await createImageWithText(imageWidth, imageHeight, 50, 128, 'Hello World!');
+const {imageWidth, imageHeight} = DymoServices.DYMO_LABELS['89mm x 36mm'];
+const image = await createImageWithText(imageWidth, imageHeight, 0, 128, 'Hello World!');
 
 // Print it, just one label.
 // We use an empty config object, so dymoServices tries to find the label printer automagically.
