@@ -5,6 +5,10 @@ import os from 'os';
 import path from 'path';
 import {execute} from './system-services.js';
 import {convertImageToBitmap, rotateImage90DegreesCounterClockwise} from './image-services.js';
+/* jshint ignore:start */
+// noinspection ES6UnusedImports
+import Jimp from 'jimp';
+/* jshint ignore:end */
 
 // Technical specifications Dymo LabelWriter 450.
 // https://download.dymo.com/dymo/user-guides/LabelWriter/LWSE450/LWSE450_TechnicalReference.pdf
@@ -43,25 +47,24 @@ export class DymoServices {
 
     /**
      * Dymo 99010 labels S0722370 compatible , 89mm x 28mm (3.5inch x 1.1inch, 300dpi).
-     * @type {{title: string, imageWidth: number, imageHeight: number}[]}
      */
-    static DYMO_LABELS = [
-        {
+    static DYMO_LABELS = {
+        '89mm x 28mm': {
             title: '89mm x 28mm',
-            imageWidth: 1050,
-            imageHeight: 330
+            imageWidth: 964,
+            imageHeight: 300
         },
-        {
+        '89mm x 36mm': {
             title: '89mm x 36mm',
-            imageWidth: 1050,
-            imageHeight: 426
+            imageWidth: 964,
+            imageHeight: 390
         },
-        {
+        '54mm x 25mm': {
             title: '54mm x 25mm',
-            imageWidth: 637,
-            imageHeight: 295
+            imageWidth: 584,
+            imageHeight: 270
         }
-    ];
+    };
 
     /**
      * @private
