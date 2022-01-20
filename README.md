@@ -38,6 +38,7 @@ const image = await createImageWithText(imageWidth, imageHeight, 0, 128, 'Hello 
 await new DymoServices({}).print(image, 1);
 ```
 
+
 ### Manual printer configuration
 
 The printer configuration is optional. When initialized with an empty configuration object, it tries to find the DYMO Label Writer. 
