@@ -72,6 +72,12 @@ new DymoServices({
 });
 ```
 
+On Linux, to grant access to device <code>/dev/usb/lp0</code>, execute the following command and restart the system:
+
+```
+# sudo adduser <username> lp
+```
+
 ## References and remarks
 
 For image processing, this library makes use of [Jimp](https://github.com/oliver-moran/jimp). An image processing library for Node written entirely in
