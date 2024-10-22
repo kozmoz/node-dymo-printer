@@ -14,7 +14,7 @@ Developed for the DYMO LabelWriter 450, but might also work for other models.
 
 ### Initialize
 
-**Create a new project directory**
+**1. Create a new project directory**
 
 Open your terminal (Command Prompt, Git Bash, etc.), and run the following commands:
 
@@ -27,7 +27,7 @@ npm init     # Initializes a new Node.js project
 When prompted, you can hit Enter multiple times to accept the default settings. 
 This will create a package.json file that helps manage the project's dependencies. 
 
-**Install the node-dymo-printer module**
+**2. Install the node-dymo-printer module**
 
 Once inside the myapp folder, install the necessary module by running:
 
@@ -37,7 +37,7 @@ npm install node-dymo-printer
 
 This will download and add the node-dymo-printer module to your project.
 
-**Run a demo script**
+**3. Run a demo script**
 
 Now, you can try running one of the example scripts provided below. For example, after adding the demo1.js file to your project folder (myapp), run:
 
