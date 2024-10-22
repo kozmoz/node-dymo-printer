@@ -1,5 +1,9 @@
 # Changes to node-dymo-printer
 
+### 0.4.2 - (October 22, 2024)
+
+-  Improvement: Made the README.md file more beginner-friendly
+
 ### 0.4.1 - (January 20, 2022)
 
 -  Improvement: Added support for Linux devices. E.g. /dev/usb/lp0

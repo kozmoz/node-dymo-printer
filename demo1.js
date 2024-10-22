@@ -14,7 +14,11 @@ const {DymoServices, createImageWithText} = require('node-dymo-printer');
     image.write(__dirname + '/image1.png');
 
     // Print it, just one label.
-    await new DymoServices().print(image, 1);
-    console.log('Successfully printed');
+    try {
+        await new DymoServices().print(image, 1);
+        console.log('Successfully printed');
+    } catch (e) {
+        console.error('Error while trying to print the image: ', e);
+    }
 
 })();
