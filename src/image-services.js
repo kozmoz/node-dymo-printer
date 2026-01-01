@@ -1,11 +1,12 @@
 import Jimp from 'jimp';
 
 // Supported font sizes (in pixels).
-const FONT_SIZES = [8, 10, 12, 14, 16, 32, 64, 128];
+const MIN_FONT_SIZE = 8;
+const MAX_FONT_SIZE = 128;
 
 
 /**
- * Set the bit of given value.
+ * Set the bit of the given value.
  * https://lucasfcosta.com/2018/12/25/bitwise-operations.html
  *
  * @param {number} value Value to change
@@ -57,10 +58,10 @@ function simulateNewlines(font, maxTextWidth, text) {
 /**
  * Create the image for the label.
  *
- * @param imageWidth Image width in pixels
- * @param imageHeight Image height in pixels
- * @param horizontalMargin Margin left and right for the text (it's not added to the total image width)
- * @param {number} fontSize Size of the font; 8,10,12,14,16,32,64 or 128 pixels.
+ * @param {number} imageWidth Image width in pixels
+ * @param {number} imageHeight Image height in pixels
+ * @param {number} horizontalMargin Margin left and right for the text (it's not added to the total image width)
+ * @param {number} fontSize Size of the font; Between 8 and 128 pixels
  * @param {string} text Text to print
  * @return {Promise<Jimp>}
  */
@@ -77,7 +78,7 @@ export function createImageWithText(imageWidth, imageHeight, horizontalMargin, f
         if (horizontalMargin < 0 || !Number.isInteger(horizontalMargin)) {
             throw Error(`createImage(): horizontalMargin should be positive integer or 0: "${horizontalMargin}"`);
         }
-        if (!fontSize || FONT_SIZES.indexOf(fontSize) === -1) {
+        if (!fontSize || fontSize < MIN_FONT_SIZE || fontSize > MAX_FONT_SIZE || !Number.isInteger(fontSize)) {
             throw Error(`createImage(): invalid font size: "${fontSize}"`);
         }
         if (!text) {
@@ -181,7 +182,7 @@ export function loadImage(arg) {
 }
 
 /**
- * Because Jimp contains a bug rotating the image, we have to crop te image after rotation to keep the same width and height.
+ * Because Jimp contains a bug rotating the image, we have to crop the image after rotation to keep the same width and height.
  *
  * @param {Jimp} image Image to rotate
  * @return {Jimp} New rotated image
@@ -195,7 +196,7 @@ export function rotateImage90DegreesCounterClockwise(image) {
         throw Error('rotateImage90DegreesCounterClockwise(): parameter image should be of type Jimp image');
     }
 
-    // Rotate image for label writer. Needs to be in portrait mode for printing.
+    // Rotate the image for the label writer. Needs to be in portrait mode for printing.
     const clonedImage = image.clone();
     const previousWidth = clonedImage.bitmap.width;
     const previousHeight = clonedImage.bitmap.height;
@@ -205,7 +206,7 @@ export function rotateImage90DegreesCounterClockwise(image) {
     // Fix for: when rotated, the width and height of pic gets larger #808
     // https://github.com/oliver-moran/jimp/issues/808
     if (clonedImage.bitmap.width !== previousHeight || clonedImage.bitmap.height !== previousWidth) {
-        // Crop to original size.
+        // Crop to the original size.
         clonedImage.crop(1, 0, previousHeight, previousWidth);
     }
     return clonedImage;

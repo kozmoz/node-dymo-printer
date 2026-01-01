@@ -18,7 +18,10 @@
     "skipLibCheck": true,
     "strict": false,
     "traceResolution": false,
-    "types": ["node"]
+    "types": ["node"],
+    "module": "esnext",
+    "outDir": "dist",
+    "target": "esnext"
   },
   "compileOnSave": false,
   "exclude": ["node_modules", "dist"],

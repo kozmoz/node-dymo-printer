@@ -5,10 +5,8 @@ import os from 'os';
 import path from 'path';
 import {execute} from './system-services.js';
 import {convertImageToBitmap, rotateImage90DegreesCounterClockwise} from './image-services.js';
-/* jshint ignore:start */
 // noinspection ES6UnusedImports
-import Jimp from 'jimp';
-/* jshint ignore:end */
+import Jimp from 'jimp'; // jshint ignore:line
 
 // Technical specifications Dymo LabelWriter 450.
 // https://download.dymo.com/dymo/user-guides/LabelWriter/LWSE450/LWSE450_TechnicalReference.pdf
@@ -46,10 +44,7 @@ const PRINTER_INTERFACE_DEVICE = 'DEVICE';
  */
 export class DymoServices {
 
-    // JSHint doesn't understand [static] class fields (yet).
-
     /* jshint ignore:start */
-
     /**
      * Dymo 99010 labels S0722370 compatible , 89mm x 28mm (3.5inch x 1.1inch, 300dpi).
      */
@@ -73,15 +68,9 @@ export class DymoServices {
 
     /**
      * @private
-     * @type {{interface:string,host?:string,port?:number,deviceId?:string,device?:string}}
-     */
-    config = {};
-    /**
-     * @private
      * @type {Buffer[]}
      */
     chunks = [];
-
     /* jshint ignore:end */
 
     /**
@@ -458,7 +447,8 @@ export class DymoServices {
                         .then((results) => {
                             results.forEach((result, idx) => {
                                 if (result.status === 'fulfilled' && result.value) {
-                                    const description = result.value
+                                    const value = `${result.value}`;
+                                    const description = value
                                         .split('\n')
                                         .filter(line => /^description:/gi.test(line.trim()))
                                         .map(line => line.replace(/description:/gi, '').trim())
@@ -564,7 +554,8 @@ export class DymoServices {
         prefix = (typeof prefix !== 'undefined') ? prefix : 'tmp.';
         suffix = (typeof suffix !== 'undefined') ? suffix : '';
         tmpdir = tmpdir ? tmpdir : os.tmpdir();
-        return path.join(tmpdir, prefix + crypto.randomBytes(16).toString('hex') + suffix);
+        const bytes = crypto.randomBytes(16);
+        return path.join(tmpdir, prefix + bytes.toString('hex') + suffix);
     }
 }
 

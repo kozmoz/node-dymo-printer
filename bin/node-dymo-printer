@@ -1,16 +1,14 @@
 #!/usr/bin/env node
 
-const path = require('path');
-
-// https://www.npmjs.com/package/cli
-const cli = require('cli');
+import path from 'path';
+import cli from 'cli';
 
 // Read version info of ltpa-scraper.
-const packageJson = require(path.join(__dirname, '..', 'package.json'));
-const DymoServices = require(path.join(__dirname, '..', 'src', 'dymo-services.js'));
-const imageServices = require(path.join(__dirname, '..', 'src', 'image-services.js'));
+import {DymoServices} from '../src/dymo-services.js';
+import * as imageServices from '../src/image-services.js';
+import packageJson from '../package.json' with {type: 'json'};
 
-// Display app name and version on --version.
+// Display app name and version from package.json on --version.
 cli.setApp(packageJson.name, packageJson.version);
 
 const options = cli.parse({
@@ -31,18 +29,16 @@ if (options['list-printers']) {
     new DymoServices().listPrinters()
         .then(printers => {
             console.log(JSON.stringify(printers, null, 2));
+            process.exit(0);
         })
         .catch(error => {
             cli.error(JSON.stringify(error, null, 2));
             process.exit(1);
         });
-    return;
-}
-
-// Print given text as label.
-if (arg1) {
+} else if (arg1) {
+    // Print given text as label.
     const dymoServices = new DymoServices();
-    const {imageWidth, imageHeight} = dymoServices.DYMO_LABELS[1];
+    const {imageWidth, imageHeight} = DymoServices.DYMO_LABELS['89mm x 28mm']; // Use a valid key
     imageServices.createImageWithText(imageWidth, imageHeight, 50, 128, arg1)
         .then(image => {
             // Rotate image for label writer.
@@ -50,6 +46,7 @@ if (arg1) {
             imageServices.convertImageToBitmap(image)
                 .then(bitmap => {
                     dymoServices.print(bitmap)
+                        .then(() => process.exit(0))
                         .catch(error => {
                             cli.error(JSON.stringify(error, null, 2));
                             process.exit(1);
@@ -64,11 +61,10 @@ if (arg1) {
             cli.error(JSON.stringify(error, null, 2));
             process.exit(1);
         });
-    return;
+} else {
+    // Use cli.error() to get nice red coloring.
+    cli.error(`Provide at least one argument to ${program}`);
+    cli.error(`See ${program} --help for details`);
+    process.exit(1);
 }
-
-// Use cli.error() to get nice red coloring.
-cli.error(`Provide at least one argument to ${program}`);
-cli.error(`See ${program} --help for details`);
-process.exit(1);
 

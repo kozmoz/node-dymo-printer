@@ -1,7 +1,7 @@
 import {spawn} from 'child_process';
 
 /**
- * Execute the given command spawned as new process.
+ * Execute the given command spawned as a new process.
  *
  * @param {string} command Command to execute
  * @param {string[]} [commandArgs] Command arguments.
