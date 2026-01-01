@@ -6,6 +6,7 @@ import cli from 'cli';
 // Read version info of ltpa-scraper.
 import {DymoServices} from '../src/dymo-services.js';
 import * as imageServices from '../src/image-services.js';
+// jshint ignore:line
 import packageJson from '../package.json' with {type: 'json'};
 
 // Display app name and version from package.json on --version.
