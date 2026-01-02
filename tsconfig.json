@@ -22,7 +22,7 @@
 
     /* Miscellaneous */
     "pretty": true,
-    "allowJs": false,
+    "allowJs": true,
     "types": ["node"]
   },
   "compileOnSave": false,

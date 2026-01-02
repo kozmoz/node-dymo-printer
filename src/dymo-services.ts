@@ -39,7 +39,7 @@ export type PrinterInterface = 'CUPS' | 'NETWORK' | 'WINDOWS' | 'DEVICE';
  * Printer configuration type.
  */
 type PrinterConfig = {
-    interface: PrinterInterface;
+    interface?: PrinterInterface;
     host?: string;
     port?: number;
     deviceId?: string;
@@ -84,7 +84,7 @@ export class DymoServices {
      */
     constructor(config: PrinterConfig) {
         DymoServices.validateConfig(config);
-        this.config = config;
+        this.config = config || {};
     }
 
     /**
@@ -298,9 +298,6 @@ export class DymoServices {
      * @param {PrinterConfig} config Config object
      */
     private static validateConfig(config: PrinterConfig): void {
-        if (!config) {
-            throw Error('No configuration provided');
-        }
         const INTERFACES = ['NETWORK', 'CUPS', 'WINDOWS', 'DEVICE'];
         if (config.interface && !INTERFACES.includes(config.interface)) {
             throw Error(`Invalid interface "${config.interface}", valid interfaces are: ${INTERFACES.join(', ')}`);
