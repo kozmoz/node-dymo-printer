@@ -1,5 +1,11 @@
 # Changes to node-dymo-printer
 
+### 1.0.0 - (Januari 2, 2026)
+
+- Improvement: Removed CommonJS support - now only ES-module compatible
+- Improvement: Code migrated to Typescript sources 
+- Improvement: Update JIMP to latest version
+
 ### 0.4.2 - (October 22, 2024)
 
 -  Improvement: Made the README.md file more beginner-friendly

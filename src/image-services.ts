@@ -1,8 +1,5 @@
-import Jimp from 'jimp';
-
-// Supported font sizes (in pixels).
-const MIN_FONT_SIZE = 8;
-const MAX_FONT_SIZE = 128;
+import {HorizontalAlign, Jimp, JimpInstance, loadFont, measureText, VerticalAlign} from 'jimp';
+import {SANS_10_BLACK, SANS_128_BLACK, SANS_12_BLACK, SANS_14_BLACK, SANS_16_BLACK, SANS_32_BLACK, SANS_64_BLACK, SANS_8_BLACK} from "jimp/fonts";
 
 /**
  * Set the bit of the given value.
@@ -17,6 +14,7 @@ function setBit(value: number, bitIndex: number): number {
     return value | bitMask;
 }
 
+// noinspection JSUnusedLocalSymbols
 /**
  * Simulate newlines by replacing them with just enough spaces to force a break at the location of the newline.
  *
@@ -33,7 +31,7 @@ function simulateNewlines(font: any, maxTextWidth: number, text: string): string
     if (!Number.isInteger(maxTextWidth)) {
         throw Error('simulateNewlines() - maxTextWidth needs to be a positive number');
     }
-    const minimalWidth = (Jimp as any).measureText(font, '||');
+    const minimalWidth = measureText(font, '||');
     if (maxTextWidth < minimalWidth) {
         throw Error(`simulateNewlines() - maxTextWidth needs to be greater than ${minimalWidth} but is ${maxTextWidth}`);
     }
@@ -45,10 +43,10 @@ function simulateNewlines(font: any, maxTextWidth: number, text: string): string
     }
     // It contains newlines, now simulate the newline by adding spaces to force a break.
     for (let i = 0; i < texts.length - 1; i++) {
-        let width = (Jimp as any).measureText(font, texts[i] + '|');
+        let width = measureText(font, texts[i] + '|');
         while (width < maxTextWidth) {
             texts[i] += ' ';
-            width = (Jimp as any).measureText(font, texts[i] + '|');
+            width = measureText(font, texts[i] + '|');
         }
     }
     return texts.join('');
@@ -63,39 +61,72 @@ function simulateNewlines(font: any, maxTextWidth: number, text: string): string
  * @param fontSize Size of the font; Between 8 and 128 pixels
  * @param text Text to print
  */
-export async function createImageWithText(imageWidth: number, imageHeight: number, horizontalMargin: number, fontSize: number, text: string): Promise<Jimp> {
+export async function createImageWithText(imageWidth: number, imageHeight: number, horizontalMargin: number, fontSize: 8 | 10 | 12 | 14 | 16 | 32 | 64 | 128, text: string): Promise<JimpInstance> {
 
     // Test parameters.
     if (!imageWidth || imageWidth < 0 || !Number.isInteger(imageWidth)) {
-        throw Error(`createImage(): imageWidth should be a positive integer: "${imageWidth}"`);
+        throw Error(`createImageWithText(): imageWidth should be a positive integer: "${imageWidth}"`);
     }
     if (!imageHeight || imageHeight < 0 || !Number.isInteger(imageHeight)) {
-        throw Error(`createImage(): imageHeight should be a positive integer: : "${imageHeight}"`);
+        throw Error(`createImageWithText(): imageHeight should be a positive integer: : "${imageHeight}"`);
     }
     if (horizontalMargin < 0 || !Number.isInteger(horizontalMargin)) {
-        throw Error(`createImage(): horizontalMargin should be positive integer or 0: "${horizontalMargin}"`);
-    }
-    if (!fontSize || fontSize < MIN_FONT_SIZE || fontSize > MAX_FONT_SIZE || !Number.isInteger(fontSize)) {
-        throw Error(`createImage(): invalid font size: "${fontSize}"`);
+        throw Error(`createImageWithText(): horizontalMargin should be positive integer or 0: "${horizontalMargin}"`);
     }
     if (!text) {
-        throw Error(`createImage(): Empty text, nothing to print.`);
+        throw Error(`createImageWithText(): Empty text, nothing to print.`);
     }
 
-    const image = await Jimp.read(imageWidth, imageHeight, '#FFFFFF');
-    const font = await Jimp.loadFont((Jimp as any)[`FONT_SANS_${fontSize}_BLACK`]);
+    let fontFile: string;
+    switch (fontSize) {
+        case 8:
+            fontFile = SANS_8_BLACK;
+            break;
+        case 10:
+            fontFile = SANS_10_BLACK;
+            break;
+        case 12:
+            fontFile = SANS_12_BLACK;
+            break;
+        case 14:
+            fontFile = SANS_14_BLACK;
+            break;
+        case 16:
+            fontFile = SANS_16_BLACK;
+            break;
+        case 32:
+            fontFile = SANS_32_BLACK;
+            break;
+        case 64:
+            fontFile = SANS_64_BLACK;
+            break;
+        case 128:
+            fontFile = SANS_128_BLACK;
+            break;
+        default:
+            throw Error(`createImageWithText(): Invalid font size: "${fontSize}"`);
+    }
+    const font = await loadFont(fontFile);
 
+    const image = new Jimp({width: imageWidth, height: imageHeight, color: 0xffffffff});
     const maxTextWidth = image.bitmap.width - 2 * horizontalMargin;
     const maxTextHeight = image.bitmap.height;
     const textObj = {
         // Simulate newlines.
-        text: simulateNewlines(font, maxTextWidth, text),
-        alignmentX: (Jimp as any).HORIZONTAL_ALIGN_LEFT,
-        alignmentY: (Jimp as any).VERTICAL_ALIGN_MIDDLE
+        // text: simulateNewlines(font, maxTextWidth, text),
+        text,
+        alignmentX: HorizontalAlign.LEFT,
+        alignmentY: VerticalAlign.MIDDLE
     };
     // Print text.
-    // noinspection JSUnresolvedFunction
-    image.print(font, horizontalMargin, 0, textObj, maxTextWidth, maxTextHeight);
+    image.print({
+        font,
+        x: horizontalMargin,
+        y: 0,
+        text: textObj,
+        maxWidth: maxTextWidth,
+        maxHeight: maxTextHeight
+    });
 
     return image;
 }
@@ -106,7 +137,7 @@ export async function createImageWithText(imageWidth: number, imageHeight: numbe
  * @param image Jimp image object (image will be manipulated)
  * @return Bitmap buffer array
  */
-export async function convertImageToBitmap(image: Jimp): Promise<number[][]> {
+export async function convertImageToBitmap(image: JimpInstance): Promise<number[][]> {
 
     if (!image) {
         throw Error('convertImageToBitmapBuffer(): parameter image is required');
@@ -116,12 +147,11 @@ export async function convertImageToBitmap(image: Jimp): Promise<number[][]> {
     }
 
     // Convert to black- and white image.
-    // noinspection JSUnresolvedFunction
     const bwImage = image
         .opaque()
         .greyscale()
         .brightness(0.3)
-        .dither565()
+        .dither()
         .posterize(2);
 
     const bitmap: number[][] = [];
@@ -158,8 +188,14 @@ export async function convertImageToBitmap(image: Jimp): Promise<number[][]> {
  * @param arg Path, URL, Buffer or Jimp image
  * @return Promise which resolves with image when successfully loaded, rejects with error otherwise
  */
-export async function loadImage(arg: string | Buffer | Jimp): Promise<Jimp> {
-    return Jimp.read(arg as any);
+export async function loadImage(arg: string | Buffer | JimpInstance): Promise<JimpInstance> {
+    if (arg && (arg as any)['readInt8']) {
+        return (await Jimp.fromBuffer(arg as Buffer)) as JimpInstance;
+    }
+    if (typeof arg === 'string') {
+        return (await Jimp.read(arg)) as JimpInstance;
+    }
+    return arg as JimpInstance;
 }
 
 /**
@@ -168,7 +204,7 @@ export async function loadImage(arg: string | Buffer | Jimp): Promise<Jimp> {
  * @param image Image to rotate
  * @return New rotated image
  */
-export function rotateImage90DegreesCounterClockwise(image: Jimp): Jimp {
+export function rotateImage90DegreesCounterClockwise(image: JimpInstance): JimpInstance {
 
     if (!image) {
         throw Error('rotateImage90DegreesCounterClockwise(): parameter image is required');
@@ -182,13 +218,13 @@ export function rotateImage90DegreesCounterClockwise(image: Jimp): Jimp {
     const previousWidth = clonedImage.bitmap.width;
     const previousHeight = clonedImage.bitmap.height;
 
-    clonedImage.rotate(-90, true);
+    clonedImage.rotate({deg: -90, mode: true});
 
     // Fix for: when rotated, the width and height of pic gets larger #808
     // https://github.com/oliver-moran/jimp/issues/808
     if (clonedImage.bitmap.width !== previousHeight || clonedImage.bitmap.height !== previousWidth) {
         // Crop to the original size.
-        clonedImage.crop(1, 0, previousHeight, previousWidth);
+        clonedImage.crop({x: 1, y: 0, w: previousHeight, h: previousWidth});
     }
     return clonedImage;
 }

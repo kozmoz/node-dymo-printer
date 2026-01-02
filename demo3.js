@@ -1,11 +1,8 @@
-const {DymoServices} = require('node-dymo-printer');
-
+import {DymoServices} from 'node-dymo-printer';
 
 /**
  * Print a list of all printers found.
  */
-
-new DymoServices().listPrinters()
-    .then(result => console.log('Found these printers: ' + JSON.stringify(result, null, 2)))
-    .catch(error => console.error('Error: ' + error));
+const result = await new DymoServices().listPrinters();
+console.log('Found these printers: ' + JSON.stringify(result, null, 2));
 

@@ -6,7 +6,7 @@ import path from 'path';
 import {execute} from './system-services.js';
 import {convertImageToBitmap, rotateImage90DegreesCounterClockwise} from './image-services.js';
 // noinspection ES6UnusedImports
-import Jimp from 'jimp'; // jshint ignore:line
+import {JimpInstance} from 'jimp';
 
 // Technical specifications Dymo LabelWriter 450.
 // https://download.dymo.com/dymo/user-guides/LabelWriter/LWSE450/LWSE450_TechnicalReference.pdf
@@ -95,7 +95,7 @@ export class DymoServices {
      * @param [printCount] Number of prints (defaults to 1)
      * @return Resolves in case of success, rejects otherwise
      */
-    async print(image: Jimp, printCount: number = 1): Promise<void> {
+    async print(image: JimpInstance, printCount: number = 1): Promise<void> {
         const rotatedImage = rotateImage90DegreesCounterClockwise(image);
         const bitmapImageBuffer = await convertImageToBitmap(rotatedImage);
         return this.printBitmap(bitmapImageBuffer, printCount);
@@ -107,7 +107,7 @@ export class DymoServices {
      * This method queries the operating system for installed printers and returns their details.
      * The implementation varies by platform:
      * - Windows: Uses PowerShell to query Win32_Printer
-     * - macOS/Linux: Uses lpstat to enumerate printers
+     * - macOS/Linux: Uses 'lpstat' to enumerate printers
      *
      * @return Promise that resolves to an array of printer objects, each containing:
      *         - deviceId: The system identifier used to reference the printer

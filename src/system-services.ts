@@ -44,7 +44,6 @@ export function execute(command: string, commandArgs: string[] = [], buffer: Buf
         proces.stderr.on('data', data => stderr.push(data));
 
         if (buffer) {
-            // noinspection JSUnresolvedVariable
             if ((proces.stdin as any).setEncoding) {
                 (proces.stdin as any).setEncoding('binary');
             }
