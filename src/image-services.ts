@@ -82,9 +82,6 @@ export function createImageWithText(imageWidth: number, imageHeight: number, hor
         if (!text) {
             throw Error(`createImage(): Empty text, nothing to print.`);
         }
-        if (typeof text !== 'string') {
-            throw Error(`createImage(): Text should be of type string.`);
-        }
 
         new Jimp(imageWidth, imageHeight, '#FFFFFF', (err: any, image: Jimp) => {
             if (err) {

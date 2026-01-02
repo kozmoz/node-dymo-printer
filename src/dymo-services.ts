@@ -73,14 +73,8 @@ export class DymoServices {
         }
     };
 
-    /**
-     * @private
-     */
     private chunks: Buffer[] = [];
 
-    /**
-     * @private
-     */
     private config: PrinterConfig;
 
     /**
@@ -89,21 +83,17 @@ export class DymoServices {
      * @param config Optional printer configuration
      */
     constructor(config: PrinterConfig) {
-        if (!config) {
-            throw Error('No configuration provided');
-        }
-        Object.assign(this.config, config);
-        DymoServices.validateConfig(this.config);
-
+        DymoServices.validateConfig(config);
+        this.config = config;
     }
 
     /**
      * Print the image.
      * The size of the image should match the size of the label.
      *
-     * @param {Jimp} image image object in landscape orientation
-     * @param {number} [printCount] Number of prints (defaults to 1)
-     * @return Promise<void> Resolves in case of success, rejects otherwise
+     * @param image image object in landscape orientation
+     * @param [printCount] Number of prints (defaults to 1)
+     * @return Resolves in case of success, rejects otherwise
      */
     print(image: Jimp, printCount: number = 1): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -121,7 +111,7 @@ export class DymoServices {
     /**
      * List all available system printers.
      *
-     * @return {Promise<{deviceId:string,name:string}[]>} List of printers or empty list
+     * @return List of printers or empty list
      */
     listPrinters(): Promise<{ deviceId: string, name: string }[]> {
         if (!IS_WINDOWS && !IS_MACOS && !IS_LINUX) {
@@ -137,14 +127,12 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Print the bitmap image buffer.
      * The size of the image should match the size of the label.
      *
-     * @param {number[][]} imageBuffer Bitmap image array, lines and rows in portrait orientation
-     * @param {number} [printCount] Number of prints
-     * @return Promise<void> Resolves in case of success, rejects otherwise
+     * @param imageBuffer Bitmap image array, lines and rows in portrait orientation
+     * @param [printCount] Number of prints
+     * @return Resolves in case of success, rejects otherwise
      */
     private printBitmap(imageBuffer: number[][], printCount: number = 1): Promise<void> {
         if (!imageBuffer || imageBuffer.length === 0) {
@@ -176,12 +164,10 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Initialize the buffer and the printer configuration.
      *
-     * @param {number} labelLineWidth The width the print head has to print, number of dots (300 dots per inch)
-     * @param {number} labelLength Number of lines to print (300 lines per inch)
+     * @param labelLineWidth The width the print head has to print, number of dots (300 dots per inch)
+     * @param labelLength Number of lines to print (300 lines per inch)
      */
     private init(labelLineWidth: number, labelLength: number): void {
 
@@ -225,11 +211,9 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Send the data to the printer.
      *
-     * @return Promise<void> Resolves in case of success, rejects otherwise
+     * @return Resolves in case of success, rejects otherwise
      */
     private sendDataToPrinter(): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -289,7 +273,6 @@ export class DymoServices {
     }
 
     /**
-     * @private
      * Clear the print buffer.
      */
     private clear(): void {
@@ -297,7 +280,6 @@ export class DymoServices {
     }
 
     /**
-     * @private
      * Append the given buffer to the print buffer.
      *
      * @param buff Buffer to add
@@ -310,14 +292,15 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Validate the configuration.
      * Throw error in case of configuration error.
      *
      * @param {PrinterConfig} config Config object
      */
     private static validateConfig(config: PrinterConfig): void {
+        if (!config) {
+            throw Error('No configuration provided');
+        }
         const INTERFACES = ['NETWORK', 'CUPS', 'WINDOWS', 'DEVICE'];
         if (config.interface && !INTERFACES.includes(config.interface)) {
             throw Error(`Invalid interface "${config.interface}", valid interfaces are: ${INTERFACES.join(', ')}`);
@@ -325,14 +308,12 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Send data to network printer.
      *
-     * @param {Buffer} buffer Printer data buffer
-     * @param {string} host Hostname or IP address (defaults to localhost)
-     * @param {number} port Port number (defaults to 9100)
-     * @return Promise<void> Resolves in case of success, rejects otherwise
+     * @param buffer Printer data buffer
+     * @param host Hostname or IP address (defaults to localhost)
+     * @param port Port number (defaults to 9100)
+     * @return Resolves in case of success, rejects otherwise
      */
     private static sendDataToNetworkPrinter(buffer: Buffer, host: string = 'localhost', port: number = 9100): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -356,13 +337,11 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Send data to USB (device) printer.
      *
-     * @param {Buffer} buffer Printer data buffer
-     * @param {string} device Device location /dev/usb/lp0
-     * @return Promise<void> Resolves in case of success, rejects otherwise
+     * @param buffer Printer data buffer
+     * @param device Device location /dev/usb/lp0
+     * @return Resolves in case of success, rejects otherwise
      */
     private static sendDataToDevicePrinter(buffer: Buffer, device: string): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -380,13 +359,11 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Send data to CUPS printer.
      *
-     * @param {Buffer} buffer Printer data buffer
-     * @param {string} deviceId CUPS device id
-     * @return Promise<void> Resolves in case of success, rejects otherwise
+     * @param buffer Printer data buffer
+     * @param deviceId CUPS device id
+     * @return Resolves in case of success, rejects otherwise
      */
     private static sendDataToCupsPrinter(buffer: Buffer, deviceId: string): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -400,8 +377,6 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Send data to Windows RAW printer.
      *
      * @param {Buffer} buffer Printer data buffer
@@ -429,8 +404,6 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Get the list of installed printers.
      *
      * @return List of printers or empty list
@@ -481,8 +454,6 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Get the list of installed printers.
      *
      * @return List of printers or empty list
@@ -501,12 +472,10 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Parse "Get-CimInstance Win32_Printer" output.
      *
      * @param stdout Process output
-     * @return {{deviceId:string,name:string}[]} List of printers or empty list
+     * @return List of printers or empty list
      */
     private static stdoutHandler(stdout: string): { deviceId: string, name: string }[] {
         const printers: { deviceId: string, name: string }[] = [];
@@ -526,12 +495,9 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Return only the printers with deviceid and name.
      *
      * @param printer
-     * @return {{isValid: boolean, printerData: {name: string, deviceId: string}}}
      */
     private static isValidPrinter(printer: string): { isValid: boolean, printerData: { name: string, deviceId: string } } {
         const printerData = {
@@ -555,15 +521,13 @@ export class DymoServices {
     }
 
     /**
-     * @private
-     *
      * Create tmp filename.
      * https://stackoverflow.com/questions/7055061/nodejs-temporary-file-name
      *
-     * @param {string} [prefix]
-     * @param {string} [suffix]
-     * @param {string} [tmpdir] optional, uses OS temp dir by default
-     * @return {string} Absolute filename temp file
+     * @param [prefix]
+     * @param [suffix]
+     * @param [tmpdir] optional, uses OS temp dir by default
+     * @return Absolute filename temp file
      */
     private static tmpFile(prefix: string = 'tmp.', suffix: string = '', tmpdir: string | undefined = undefined): string {
         prefix = (typeof prefix !== 'undefined') ? prefix : 'tmp.';

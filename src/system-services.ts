@@ -21,8 +21,8 @@ export function execute(command: string, commandArgs: string[] = [], buffer: Buf
         // https://jscomplete.com/learn/node-beyond-basics/child-processes
         const proces = spawn(command, commandArgs);
 
-        const stdout = [];
-        const stderr = [];
+        const stdout: string[] = [];
+        const stderr: string[] = [];
         proces.on('exit', function (code) {
             if (code === 0) {
                 if (stderr.length > 0) {
