@@ -3,10 +3,9 @@ import {spawn} from 'child_process';
 /**
  * Execute the given command spawned as a new process.
  *
- * @param {string} command Command to execute
- * @param {string[]} [commandArgs] Command arguments.
- * @param {Buffer} [buffer] Buffer to send (optional)
- * @return {Promise<string>}
+ * @param command Command to execute
+ * @param [commandArgs] Command arguments.
+ * @param [buffer] Buffer to send (optional)
  */
 export function execute(command: string, commandArgs: string[] = [], buffer: Buffer | undefined = undefined): Promise<string> {
     return new Promise((resolve, reject) => {

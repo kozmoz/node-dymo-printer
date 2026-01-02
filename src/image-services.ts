@@ -4,14 +4,13 @@ import Jimp from 'jimp';
 const MIN_FONT_SIZE = 8;
 const MAX_FONT_SIZE = 128;
 
-
 /**
  * Set the bit of the given value.
  * https://lucasfcosta.com/2018/12/25/bitwise-operations.html
  *
- * @param {number} value Value to change
- * @param {number} bitIndex Bit to set to 1
- * @return {number} Result
+ * @param value Value to change
+ * @param bitIndex Bit to set to 1
+ * @return Result
  */
 function setBit(value: number, bitIndex: number): number {
     const bitMask = 1 << bitIndex;
@@ -21,10 +20,10 @@ function setBit(value: number, bitIndex: number): number {
 /**
  * Simulate newlines by replacing them with just enough spaces to force a break at the location of the newline.
  *
- * @param {any} font Jimp font
- * @param {number} maxTextWidth The max width of the text block
- * @param {string} text The text with newlines
- * @return {string} The resulting text with newlines removed and spaces added
+ * @param font Jimp font
+ * @param maxTextWidth The max width of the text block
+ * @param text The text with newlines
+ * @return The resulting text with newlines removed and spaces added
  */
 function simulateNewlines(font: any, maxTextWidth: number, text: string): string {
 
@@ -58,12 +57,11 @@ function simulateNewlines(font: any, maxTextWidth: number, text: string): string
 /**
  * Create the image for the label.
  *
- * @param {number} imageWidth Image width in pixels
- * @param {number} imageHeight Image height in pixels
- * @param {number} horizontalMargin Margin left and right for the text (it's not added to the total image width)
- * @param {number} fontSize Size of the font; Between 8 and 128 pixels
- * @param {string} text Text to print
- * @return {Promise<Jimp>}
+ * @param imageWidth Image width in pixels
+ * @param imageHeight Image height in pixels
+ * @param horizontalMargin Margin left and right for the text (it's not added to the total image width)
+ * @param fontSize Size of the font; Between 8 and 128 pixels
+ * @param text Text to print
  */
 export function createImageWithText(imageWidth: number, imageHeight: number, horizontalMargin: number, fontSize: number, text: string): Promise<Jimp> {
     return new Promise((resolve, reject) => {
@@ -117,10 +115,10 @@ export function createImageWithText(imageWidth: number, imageHeight: number, hor
 }
 
 /**
- * Create bitmap from Jimp image object.
+ * Create a bitmap from the Jimp image-object.
  *
- * @param {Jimp} image Jimp image object (image will be manipulated)
- * @return {Promise<number[][]>} Bitmap buffer array
+ * @param image Jimp image object (image will be manipulated)
+ * @return Bitmap buffer array
  */
 export function convertImageToBitmap(image: Jimp): Promise<number[][]> {
     return new Promise((resolve) => {
@@ -149,7 +147,7 @@ export function convertImageToBitmap(image: Jimp): Promise<number[][]> {
             // x, y is the position of this pixel on the image.
             // idx is the position start position of this rgba tuple in the bitmap Buffer.
 
-            // Add new empty row.
+            // Add a new empty row.
             if (bitmap.length <= y) {
                 const bytes = Math.ceil(bwImage.bitmap.width / 8);
                 bitmap.push(new Array(bytes).fill(0));
@@ -173,8 +171,8 @@ export function convertImageToBitmap(image: Jimp): Promise<number[][]> {
 /**
  * Convenient function to load image.
  *
- * @param {string|Buffer|Jimp} arg Path, URL, Buffer or Jimp image
- * @return {Promise<Jimp>} Promise which resolves with image when successfully loaded, rejects with error otherwise
+ * @param arg Path, URL, Buffer or Jimp image
+ * @return Promise which resolves with image when successfully loaded, rejects with error otherwise
  */
 export function loadImage(arg: string | Buffer | Jimp): Promise<Jimp> {
     return Jimp.read(arg as any);
@@ -183,8 +181,8 @@ export function loadImage(arg: string | Buffer | Jimp): Promise<Jimp> {
 /**
  * Because Jimp contains a bug rotating the image, we have to crop the image after rotation to keep the same width and height.
  *
- * @param {Jimp} image Image to rotate
- * @return {Jimp} New rotated image
+ * @param image Image to rotate
+ * @return New rotated image
  */
 export function rotateImage90DegreesCounterClockwise(image: Jimp): Jimp {
 

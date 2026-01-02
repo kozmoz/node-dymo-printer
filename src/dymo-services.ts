@@ -33,21 +33,29 @@ const IS_WINDOWS = process.platform === 'win32';
 const IS_MACOS = process.platform === 'darwin';
 const IS_LINUX = process.platform === 'linux';
 
-const PRINTER_INTERFACE_CUPS = 'CUPS';
-const PRINTER_INTERFACE_NETWORK = 'NETWORK';
-const PRINTER_INTERFACE_WINDOWS = 'WINDOWS';
-const PRINTER_INTERFACE_DEVICE = 'DEVICE';
+export type PrinterInterface = 'CUPS' | 'NETWORK' | 'WINDOWS' | 'DEVICE';
 
 /**
- * Create service that connects to configured DYMO LabelWriter.
- * If no configuration found, try to find the DYMO printer. First one found is used.
+ * Printer configuration type.
+ */
+type PrinterConfig = {
+    interface: PrinterInterface;
+    host?: string;
+    port?: number;
+    deviceId?: string;
+    device?: string;
+};
+
+/**
+ * Create the service that connects to configured DYMO LabelWriter.
+ * If no configuration is found, try to find the DYMO printer. The first one found is used.
  */
 export class DymoServices {
 
     /**
-     * Dymo 99010 labels S0722370 compatible , 89mm x 28mm (3.5inch x 1.1inch, 300dpi).
+     * Dymo 99010 labels S0722370 compatible, 89mm x 28mm (3.5inch x 1.1inch, 300dpi).
      */
-    static DYMO_LABELS: Record<string, {title: string, imageWidth: number, imageHeight: number}> = {
+    static DYMO_LABELS: Record<string, { title: string, imageWidth: number, imageHeight: number }> = {
         '89mm x 28mm': {
             title: '89mm x 28mm',
             imageWidth: 964,
@@ -73,18 +81,20 @@ export class DymoServices {
     /**
      * @private
      */
-    private config: {interface?: string, host?: string, port?: number, deviceId?: string, device?: string} = {};
+    private config: PrinterConfig;
 
     /**
      * Create a new DymoServices instance.
      *
-     * @param {{interface?:string,host?:string,port?:number,deviceId?:string,device?:string}} config Optional printer configuration
+     * @param config Optional printer configuration
      */
-    constructor(config: {interface?: string, host?: string, port?: number, deviceId?: string, device?: string} | undefined = undefined) {
-        if (config) {
-            Object.assign(this.config, config);
-            DymoServices.validateConfig(this.config);
+    constructor(config: PrinterConfig) {
+        if (!config) {
+            throw Error('No configuration provided');
         }
+        Object.assign(this.config, config);
+        DymoServices.validateConfig(this.config);
+
     }
 
     /**
@@ -113,7 +123,7 @@ export class DymoServices {
      *
      * @return {Promise<{deviceId:string,name:string}[]>} List of printers or empty list
      */
-    listPrinters(): Promise<{deviceId: string, name: string}[]> {
+    listPrinters(): Promise<{ deviceId: string, name: string }[]> {
         if (!IS_WINDOWS && !IS_MACOS && !IS_LINUX) {
             return Promise.reject('Cannot list printers, unsupported operating system: ' + process.platform);
         }
@@ -188,7 +198,7 @@ export class DymoServices {
 
         // <esc> D n Set Bytes per Line
         // This command reduces the number of bytes sent for each line.
-        // E.g. 332 pixels (will be 336 dots, 42 * 8).
+        // E.g., 332 pixels (will be 336 dots, 42 * 8).
         const labelLineWidthBytes = Math.ceil(labelLineWidth / 8);
         this.append(Buffer.from([0x1b, 'D'.charCodeAt(0), labelLineWidthBytes]));
 
@@ -199,14 +209,14 @@ export class DymoServices {
         // <esc> L nl n2 Set Label Length
         // This command indicates the maximum distance the printer should travel while searching for the
         // top-of-form hole or mark.
-        // E.g. 1052 pixels
+        // E.g., 1052 pixels
         const lsb = labelLength & 0xFF;
         const msb = labelLength >> 8 & 0xFF;
         this.append(Buffer.from([0x1b, 'L'.charCodeAt(0), msb, lsb]));
 
         // <esc> h Text Speed Mode (300x300 dpi)
         // This command instructs the printer to print in 300 x 300 dpi Text Quality mode.
-        // This is the default, high speed printing mode.
+        // This is the default, high-speed printing mode.
         this.append(CMD_TEXT_SPEED_MODE);
 
         // <esc> e Set Print Density Normal
@@ -240,7 +250,7 @@ export class DymoServices {
                             return;
                         }
                         // Found a Dymo label writer.
-                        this.config.interface = IS_WINDOWS ? PRINTER_INTERFACE_WINDOWS : PRINTER_INTERFACE_CUPS;
+                        this.config.interface = IS_WINDOWS ? 'WINDOWS' : 'CUPS';
                         this.config.deviceId = printer.deviceId;
                         this.sendDataToPrinter()
                             .then(resolve)
@@ -250,25 +260,25 @@ export class DymoServices {
                 return;
             }
 
-            if (printerInterface === PRINTER_INTERFACE_NETWORK) {
+            if (printerInterface === 'NETWORK') {
                 DymoServices.sendDataToNetworkPrinter(buffer, this.config.host, this.config.port)
                     .then(resolve)
                     .catch(reject);
                 return;
             }
-            if (printerInterface === PRINTER_INTERFACE_CUPS) {
+            if (printerInterface === 'CUPS') {
                 DymoServices.sendDataToCupsPrinter(buffer, this.config.deviceId as string)
                     .then(resolve)
                     .catch(reject);
                 return;
             }
-            if (printerInterface === PRINTER_INTERFACE_WINDOWS) {
+            if (printerInterface === 'WINDOWS') {
                 DymoServices.sendDataToWindowsPrinter(buffer, this.config.deviceId as string)
                     .then(resolve)
                     .catch(reject);
                 return;
             }
-            if (printerInterface === PRINTER_INTERFACE_DEVICE) {
+            if (printerInterface === 'DEVICE') {
                 DymoServices.sendDataToDevicePrinter(buffer, this.config.device as string)
                     .then(resolve)
                     .catch(reject);
@@ -288,9 +298,9 @@ export class DymoServices {
 
     /**
      * @private
-     * Append given buffer to the print buffer.
+     * Append the given buffer to the print buffer.
      *
-     * @param {Buffer} buff Buffer to add
+     * @param buff Buffer to add
      */
     private append(buff: Buffer): void {
         if (!Buffer.isBuffer(buff)) {
@@ -305,11 +315,11 @@ export class DymoServices {
      * Validate the configuration.
      * Throw error in case of configuration error.
      *
-     * @param {{interface?:string,host?:string,port?:number,deviceId?:string}} config Config object
+     * @param {PrinterConfig} config Config object
      */
-    private static validateConfig(config: {interface?: string, host?: string, port?: number, deviceId?: string}): void {
-        const INTERFACES = [PRINTER_INTERFACE_NETWORK, PRINTER_INTERFACE_CUPS, PRINTER_INTERFACE_WINDOWS, PRINTER_INTERFACE_DEVICE];
-        if (config.interface && INTERFACES.indexOf(config.interface) === -1) {
+    private static validateConfig(config: PrinterConfig): void {
+        const INTERFACES = ['NETWORK', 'CUPS', 'WINDOWS', 'DEVICE'];
+        if (config.interface && !INTERFACES.includes(config.interface)) {
             throw Error(`Invalid interface "${config.interface}", valid interfaces are: ${INTERFACES.join(', ')}`);
         }
     }
@@ -421,11 +431,11 @@ export class DymoServices {
     /**
      * @private
      *
-     * Get list of installed printers.
+     * Get the list of installed printers.
      *
-     * @return {Promise<{deviceId:string,name:string}[]>} List of printers or empty list
+     * @return List of printers or empty list
      */
-    private static listPrintersMacLinux(): Promise<{deviceId: string, name: string}[]> {
+    private static listPrintersMacLinux(): Promise<{ deviceId: string, name: string }[]> {
         return new Promise((resolve, reject) => {
             // noinspection SpellCheckingInspection
             execute('lpstat', ['-e'])
@@ -473,11 +483,11 @@ export class DymoServices {
     /**
      * @private
      *
-     * Get list of installed printers.
+     * Get the list of installed printers.
      *
-     * @return {Promise<{deviceId:string,name:string}[]>} List of printers or empty list
+     * @return List of printers or empty list
      */
-    private static listPrintersWindows(): Promise<{deviceId: string, name: string}[]> {
+    private static listPrintersWindows(): Promise<{ deviceId: string, name: string }[]> {
         return new Promise((resolve, reject) => {
             execute('Powershell.exe', [
                 '-Command',
@@ -498,8 +508,8 @@ export class DymoServices {
      * @param stdout Process output
      * @return {{deviceId:string,name:string}[]} List of printers or empty list
      */
-    private static stdoutHandler(stdout: string): {deviceId: string, name: string}[] {
-        const printers: {deviceId: string, name: string}[] = [];
+    private static stdoutHandler(stdout: string): { deviceId: string, name: string }[] {
+        const printers: { deviceId: string, name: string }[] = [];
         stdout
             .split(/(\r?\n){2,}/)
             .map((printer) => printer.trim())
@@ -523,7 +533,7 @@ export class DymoServices {
      * @param printer
      * @return {{isValid: boolean, printerData: {name: string, deviceId: string}}}
      */
-    private static isValidPrinter(printer: string): {isValid: boolean, printerData: {name: string, deviceId: string}} {
+    private static isValidPrinter(printer: string): { isValid: boolean, printerData: { name: string, deviceId: string } } {
         const printerData = {
             deviceId: '',
             name: '',
