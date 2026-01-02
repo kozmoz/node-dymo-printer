@@ -1,14 +1,13 @@
 import {spawn} from 'child_process';
 
 /**
- * Execute the given command spawned as new process.
+ * Execute the given command spawned as a new process.
  *
- * @param {string} command Command to execute
- * @param {string[]} [commandArgs] Command arguments.
- * @param {Buffer} [buffer] Buffer to send (optional)
- * @return {Promise<string>}
+ * @param command Command to execute
+ * @param [commandArgs] Command arguments.
+ * @param [buffer] Buffer to send (optional)
  */
-export function execute(command, commandArgs = [], buffer = undefined) {
+export function execute(command: string, commandArgs: string[] = [], buffer: Buffer | undefined = undefined): Promise<string> {
     return new Promise((resolve, reject) => {
 
         if (!command) {
@@ -22,8 +21,8 @@ export function execute(command, commandArgs = [], buffer = undefined) {
         // https://jscomplete.com/learn/node-beyond-basics/child-processes
         const proces = spawn(command, commandArgs);
 
-        const stdout = [];
-        const stderr = [];
+        const stdout: string[] = [];
+        const stderr: string[] = [];
         proces.on('exit', function (code) {
             if (code === 0) {
                 if (stderr.length > 0) {
@@ -45,9 +44,8 @@ export function execute(command, commandArgs = [], buffer = undefined) {
         proces.stderr.on('data', data => stderr.push(data));
 
         if (buffer) {
-            // noinspection JSUnresolvedVariable
-            if (proces.stdin.setEncoding) {
-                proces.stdin.setEncoding('binary');
+            if ((proces.stdin as any).setEncoding) {
+                (proces.stdin as any).setEncoding('binary');
             }
             proces.stdin.write(buffer);
         }

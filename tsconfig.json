@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "lib": ["ESNext"],
+    "outDir": "dist",
+    "rootDir": "src",
+
+    /* Strict Checking */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Interop & Helpers */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "declaration": true,
+
+    /* Miscellaneous */
+    "pretty": true,
+    "allowJs": true,
+    "types": ["node"]
+  },
+  "compileOnSave": false,
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

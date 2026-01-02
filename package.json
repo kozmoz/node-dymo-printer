@@ -1,20 +1,16 @@
 {
   "name": "node-dymo-printer",
-  "version": "0.4.2",
-  "description": "A library to print labels from Node.js. Pure javascript cross-platform with no platform specific dependencies.",
+  "version": "1.0.0",
+  "description": "A lightweight, zero-dependency Node.js library for DYMO LabelWriter 400/450 series printers. Pure JavaScript, cross-platform, and functions without the DYMO SDK or Web Services.",
   "homepage": "https://github.com/kozmoz/node-dymo-printer",
-  "main": "dist/cjs/index.js",
-  "module": "dist/mjs/index.js",
+  "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/ems/dymo-services.js",
-      "require": "./dist/cjs/dymo-services.js"
+      "import": "./dist/dymo-services.js"
     }
   },
-  "type": "module",
   "scripts": {
-    "build": "rm -fr dist && mkdir dist && tsc -p tsconfig-esm.json && tsc -p tsconfig-cjs.json && . ./fixup.sh",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rm -fr dist && mkdir dist && tsc"
   },
   "bin": {
     "node-dymo-printer": "./bin/node-dymo-printer"
@@ -32,11 +28,11 @@
   "license": "ISC",
   "dependencies": {
     "cli": "1.0.1",
-    "jimp": "0.16.1"
+    "jimp": "1.6.0"
   },
   "devDependencies": {
-    "@types/node": "18.0.1",
-    "typescript": "4.7.4"
+    "@types/node": "25.0.3",
+    "typescript": "5.9.3"
   },
   "files": [
     "dist/",
@@ -44,7 +40,7 @@
     "demo*"
   ],
   "engines": {
-    "node": ">=12.0.0",
+    "node": ">=18.0.0",
     "npm": ">=6.0.0"
   },
   "os": [
