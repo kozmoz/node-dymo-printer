@@ -8,7 +8,7 @@ import {spawn} from 'child_process';
  * @param {Buffer} [buffer] Buffer to send (optional)
  * @return {Promise<string>}
  */
-export function execute(command, commandArgs = [], buffer = undefined) {
+export function execute(command: string, commandArgs: string[] = [], buffer: Buffer | undefined = undefined): Promise<string> {
     return new Promise((resolve, reject) => {
 
         if (!command) {
@@ -46,8 +46,8 @@ export function execute(command, commandArgs = [], buffer = undefined) {
 
         if (buffer) {
             // noinspection JSUnresolvedVariable
-            if (proces.stdin.setEncoding) {
-                proces.stdin.setEncoding('binary');
+            if ((proces.stdin as any).setEncoding) {
+                (proces.stdin as any).setEncoding('binary');
             }
             proces.stdin.write(buffer);
         }

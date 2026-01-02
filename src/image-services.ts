@@ -13,7 +13,7 @@ const MAX_FONT_SIZE = 128;
  * @param {number} bitIndex Bit to set to 1
  * @return {number} Result
  */
-function setBit(value, bitIndex) {
+function setBit(value: number, bitIndex: number): number {
     const bitMask = 1 << bitIndex;
     return value | bitMask;
 }
@@ -26,7 +26,7 @@ function setBit(value, bitIndex) {
  * @param {string} text The text with newlines
  * @return {string} The resulting text with newlines removed and spaces added
  */
-function simulateNewlines(font, maxTextWidth, text) {
+function simulateNewlines(font: any, maxTextWidth: number, text: string): string {
 
     if (!font) {
         throw Error('simulateNewlines() - font is required');
@@ -34,7 +34,7 @@ function simulateNewlines(font, maxTextWidth, text) {
     if (!Number.isInteger(maxTextWidth)) {
         throw Error('simulateNewlines() - maxTextWidth needs to be a positive number');
     }
-    const minimalWidth = Jimp.measureText(font, '||');
+    const minimalWidth = (Jimp as any).measureText(font, '||');
     if (maxTextWidth < minimalWidth) {
         throw Error(`simulateNewlines() - maxTextWidth needs to be greater than ${minimalWidth} but is ${maxTextWidth}`);
     }
@@ -46,10 +46,10 @@ function simulateNewlines(font, maxTextWidth, text) {
     }
     // It contains newlines, now simulate the newline by adding spaces to force a break.
     for (let i = 0; i < texts.length - 1; i++) {
-        let width = Jimp.measureText(font, texts[i] + '|');
+        let width = (Jimp as any).measureText(font, texts[i] + '|');
         while (width < maxTextWidth) {
             texts[i] += ' ';
-            width = Jimp.measureText(font, texts[i] + '|');
+            width = (Jimp as any).measureText(font, texts[i] + '|');
         }
     }
     return texts.join('');
@@ -65,7 +65,7 @@ function simulateNewlines(font, maxTextWidth, text) {
  * @param {string} text Text to print
  * @return {Promise<Jimp>}
  */
-export function createImageWithText(imageWidth, imageHeight, horizontalMargin, fontSize, text) {
+export function createImageWithText(imageWidth: number, imageHeight: number, horizontalMargin: number, fontSize: number, text: string): Promise<Jimp> {
     return new Promise((resolve, reject) => {
 
         // Test parameters.
@@ -88,13 +88,13 @@ export function createImageWithText(imageWidth, imageHeight, horizontalMargin, f
             throw Error(`createImage(): Text should be of type string.`);
         }
 
-        new Jimp(imageWidth, imageHeight, '#FFFFFF', (err, image) => {
+        new Jimp(imageWidth, imageHeight, '#FFFFFF', (err: any, image: Jimp) => {
             if (err) {
                 reject(err);
                 return;
             }
 
-            Jimp.loadFont(Jimp[`FONT_SANS_${fontSize}_BLACK`])
+            Jimp.loadFont((Jimp as any)[`FONT_SANS_${fontSize}_BLACK`])
                 .then(font => {
 
                     const maxTextWidth = image.bitmap.width - 2 * horizontalMargin;
@@ -102,8 +102,8 @@ export function createImageWithText(imageWidth, imageHeight, horizontalMargin, f
                     const textObj = {
                         // Simulate newlines.
                         text: simulateNewlines(font, maxTextWidth, text),
-                        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
-                        alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE
+                        alignmentX: (Jimp as any).HORIZONTAL_ALIGN_LEFT,
+                        alignmentY: (Jimp as any).VERTICAL_ALIGN_MIDDLE
                     };
                     // Print text.
                     // noinspection JSUnresolvedFunction
@@ -122,7 +122,7 @@ export function createImageWithText(imageWidth, imageHeight, horizontalMargin, f
  * @param {Jimp} image Jimp image object (image will be manipulated)
  * @return {Promise<number[][]>} Bitmap buffer array
  */
-export function convertImageToBitmap(image) {
+export function convertImageToBitmap(image: Jimp): Promise<number[][]> {
     return new Promise((resolve) => {
 
         if (!image) {
@@ -141,7 +141,7 @@ export function convertImageToBitmap(image) {
             .dither565()
             .posterize(2);
 
-        const bitmap = [];
+        const bitmap: number[][] = [];
 
         // Helper method is available to scan a region of the bitmap:
         // image.scan(x, y, w, h, f); // scan a given region of the bitmap and call the function f on every pixel
@@ -165,9 +165,8 @@ export function convertImageToBitmap(image) {
                 // Set bits from left to right.
                 row[byteIndex] = setBit(row[byteIndex], [7, 6, 5, 4, 3, 2, 1, 0][x % 8]);
             }
-        }, function () {
-            resolve(bitmap);
         });
+        resolve(bitmap);
     });
 }
 
@@ -177,8 +176,8 @@ export function convertImageToBitmap(image) {
  * @param {string|Buffer|Jimp} arg Path, URL, Buffer or Jimp image
  * @return {Promise<Jimp>} Promise which resolves with image when successfully loaded, rejects with error otherwise
  */
-export function loadImage(arg) {
-    return Jimp.read(arg);
+export function loadImage(arg: string | Buffer | Jimp): Promise<Jimp> {
+    return Jimp.read(arg as any);
 }
 
 /**
@@ -187,7 +186,7 @@ export function loadImage(arg) {
  * @param {Jimp} image Image to rotate
  * @return {Jimp} New rotated image
  */
-export function rotateImage90DegreesCounterClockwise(image) {
+export function rotateImage90DegreesCounterClockwise(image: Jimp): Jimp {
 
     if (!image) {
         throw Error('rotateImage90DegreesCounterClockwise(): parameter image is required');

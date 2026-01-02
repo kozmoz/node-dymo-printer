@@ -4,13 +4,11 @@ import path from 'path';
 import cli from 'cli';
 
 // Read version info of ltpa-scraper.
-import {DymoServices} from '../src/dymo-services.js';
-import * as imageServices from '../src/image-services.js';
-// jshint ignore:line
-import packageJson from '../package.json' with {type: 'json'};
+import {DymoServices} from '../dist/dymo-services.js';
+import * as imageServices from '../dist/image-services.js';
 
 // Display app name and version from package.json on --version.
-cli.setApp(packageJson.name, packageJson.version);
+cli.setApp('package.json');
 
 const options = cli.parse({
     'list-printers': [false, 'List all system printers found.'],
@@ -22,7 +20,7 @@ const arg1 = process.argv.length > 2 ? process.argv[2] : '';
 
 // Show version info and exit.
 if (options.version) {
-    cli.info(`${packageJson.name} v${packageJson.version}`);
+    cli.info(`${cli.app} v${cli.version}`);
     process.exit(0);
 }
 
@@ -42,7 +40,7 @@ if (options['list-printers']) {
     const {imageWidth, imageHeight} = DymoServices.DYMO_LABELS['89mm x 28mm']; // Use a valid key
     imageServices.createImageWithText(imageWidth, imageHeight, 50, 128, arg1)
         .then(image => {
-            // Rotate image for label writer.
+            // Rotate image for the label writer.
             image.rotate(-90, true);
             imageServices.convertImageToBitmap(image)
                 .then(bitmap => {

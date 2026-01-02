@@ -44,11 +44,10 @@ const PRINTER_INTERFACE_DEVICE = 'DEVICE';
  */
 export class DymoServices {
 
-    /* jshint ignore:start */
     /**
      * Dymo 99010 labels S0722370 compatible , 89mm x 28mm (3.5inch x 1.1inch, 300dpi).
      */
-    static DYMO_LABELS = {
+    static DYMO_LABELS: Record<string, {title: string, imageWidth: number, imageHeight: number}> = {
         '89mm x 28mm': {
             title: '89mm x 28mm',
             imageWidth: 964,
@@ -68,24 +67,26 @@ export class DymoServices {
 
     /**
      * @private
-     * @type {Buffer[]}
      */
-    chunks = [];
-    /* jshint ignore:end */
+    private chunks: Buffer[] = [];
 
     /**
-     * Create new DymoServices instance.
-     *
-     * @param {{interface:string,host?:string,port?:number,deviceId?:string,device:string}} config Optional printer configuration
+     * @private
      */
-    constructor(config = undefined) {
+    private config: {interface?: string, host?: string, port?: number, deviceId?: string, device?: string} = {};
+
+    /**
+     * Create a new DymoServices instance.
+     *
+     * @param {{interface?:string,host?:string,port?:number,deviceId?:string,device?:string}} config Optional printer configuration
+     */
+    constructor(config: {interface?: string, host?: string, port?: number, deviceId?: string, device?: string} | undefined = undefined) {
         if (config) {
             Object.assign(this.config, config);
             DymoServices.validateConfig(this.config);
         }
     }
 
-    // noinspection JSValidateJSDoc
     /**
      * Print the image.
      * The size of the image should match the size of the label.
@@ -94,7 +95,7 @@ export class DymoServices {
      * @param {number} [printCount] Number of prints (defaults to 1)
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    print(image, printCount = 1) {
+    print(image: Jimp, printCount: number = 1): Promise<void> {
         return new Promise((resolve, reject) => {
             const rotatedImage = rotateImage90DegreesCounterClockwise(image);
             convertImageToBitmap(rotatedImage)
@@ -112,7 +113,7 @@ export class DymoServices {
      *
      * @return {Promise<{deviceId:string,name:string}[]>} List of printers or empty list
      */
-    listPrinters() {
+    listPrinters(): Promise<{deviceId: string, name: string}[]> {
         if (!IS_WINDOWS && !IS_MACOS && !IS_LINUX) {
             return Promise.reject('Cannot list printers, unsupported operating system: ' + process.platform);
         }
@@ -122,6 +123,7 @@ export class DymoServices {
         if (IS_MACOS || IS_LINUX) {
             return DymoServices.listPrintersMacLinux();
         }
+        return Promise.resolve([]);
     }
 
     /**
@@ -134,7 +136,7 @@ export class DymoServices {
      * @param {number} [printCount] Number of prints
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    printBitmap(imageBuffer, printCount = 1) {
+    private printBitmap(imageBuffer: number[][], printCount: number = 1): Promise<void> {
         if (!imageBuffer || imageBuffer.length === 0) {
             throw Error('Empty imageBuffer, cannot print');
         }
@@ -171,7 +173,7 @@ export class DymoServices {
      * @param {number} labelLineWidth The width the print head has to print, number of dots (300 dots per inch)
      * @param {number} labelLength Number of lines to print (300 lines per inch)
      */
-    init(labelLineWidth, labelLength) {
+    private init(labelLineWidth: number, labelLength: number): void {
 
         this.clear();
 
@@ -219,7 +221,7 @@ export class DymoServices {
      *
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    sendDataToPrinter() {
+    private sendDataToPrinter(): Promise<void> {
         return new Promise((resolve, reject) => {
             const buffer = Buffer.concat(this.chunks);
             const printerInterface = this.config.interface;
@@ -255,19 +257,19 @@ export class DymoServices {
                 return;
             }
             if (printerInterface === PRINTER_INTERFACE_CUPS) {
-                DymoServices.sendDataToCupsPrinter(buffer, this.config.deviceId)
+                DymoServices.sendDataToCupsPrinter(buffer, this.config.deviceId as string)
                     .then(resolve)
                     .catch(reject);
                 return;
             }
             if (printerInterface === PRINTER_INTERFACE_WINDOWS) {
-                DymoServices.sendDataToWindowsPrinter(buffer, this.config.deviceId)
+                DymoServices.sendDataToWindowsPrinter(buffer, this.config.deviceId as string)
                     .then(resolve)
                     .catch(reject);
                 return;
             }
             if (printerInterface === PRINTER_INTERFACE_DEVICE) {
-                DymoServices.sendDataToDevicePrinter(buffer, this.config.device)
+                DymoServices.sendDataToDevicePrinter(buffer, this.config.device as string)
                     .then(resolve)
                     .catch(reject);
                 return;
@@ -280,7 +282,7 @@ export class DymoServices {
      * @private
      * Clear the print buffer.
      */
-    clear() {
+    private clear(): void {
         this.chunks.length = 0;
     }
 
@@ -290,7 +292,7 @@ export class DymoServices {
      *
      * @param {Buffer} buff Buffer to add
      */
-    append(buff) {
+    private append(buff: Buffer): void {
         if (!Buffer.isBuffer(buff)) {
             throw Error('append() called with type other than Buffer: ' + typeof buff);
         }
@@ -303,9 +305,9 @@ export class DymoServices {
      * Validate the configuration.
      * Throw error in case of configuration error.
      *
-     * @param {{interface:string,host?:string,port?:number,deviceId?:string}} config Config object
+     * @param {{interface?:string,host?:string,port?:number,deviceId?:string}} config Config object
      */
-    static validateConfig(config) {
+    private static validateConfig(config: {interface?: string, host?: string, port?: number, deviceId?: string}): void {
         const INTERFACES = [PRINTER_INTERFACE_NETWORK, PRINTER_INTERFACE_CUPS, PRINTER_INTERFACE_WINDOWS, PRINTER_INTERFACE_DEVICE];
         if (config.interface && INTERFACES.indexOf(config.interface) === -1) {
             throw Error(`Invalid interface "${config.interface}", valid interfaces are: ${INTERFACES.join(', ')}`);
@@ -322,7 +324,7 @@ export class DymoServices {
      * @param {number} port Port number (defaults to 9100)
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    static sendDataToNetworkPrinter(buffer, host = 'localhost', port = 9100) {
+    private static sendDataToNetworkPrinter(buffer: Buffer, host: string = 'localhost', port: number = 9100): Promise<void> {
         return new Promise((resolve, reject) => {
             const networkPrinter = net.connect({host, port, timeout: 30000}, function () {
                 networkPrinter.write(buffer, 'binary', () => {
@@ -352,7 +354,7 @@ export class DymoServices {
      * @param {string} device Device location /dev/usb/lp0
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    static sendDataToDevicePrinter(buffer, device) {
+    private static sendDataToDevicePrinter(buffer: Buffer, device: string): Promise<void> {
         return new Promise((resolve, reject) => {
             if (!device) {
                 throw Error('Cannot write to device, the device name is empty');
@@ -376,13 +378,13 @@ export class DymoServices {
      * @param {string} deviceId CUPS device id
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    static sendDataToCupsPrinter(buffer, deviceId) {
+    private static sendDataToCupsPrinter(buffer: Buffer, deviceId: string): Promise<void> {
         return new Promise((resolve, reject) => {
             if (!deviceId) {
                 throw Error('Cannot print to CUPS printer, deviceId is not configured.');
             }
             execute('lp', ['-d', `${deviceId}`], buffer)
-                .then(resolve)
+                .then(() => resolve())
                 .catch(reject);
         });
     }
@@ -396,13 +398,17 @@ export class DymoServices {
      * @param {string} deviceId Windows printer device id
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    static sendDataToWindowsPrinter(buffer, deviceId) {
+    private static sendDataToWindowsPrinter(buffer: Buffer, deviceId: string): Promise<void> {
         // > RawPrint "Name of Your Printer" filename
         // http://www.columbia.edu/~em36/windowsrawprint.html
         // https://github.com/frogmorecs/RawPrint
         return new Promise((resolve, reject) => {
-            const tmp = DymoServices.tmpFile();
+            const tmp = DymoServices.tmpFile('tmp.', '', undefined);
             fs.writeFileSync(tmp, buffer, {encoding: 'binary'});
+            // Re-create __dirname for ESM
+            const __filename = new URL(import.meta.url).pathname;
+            const __dirname = path.dirname(__filename);
+
             execute(path.join(__dirname, '..', 'windows', 'RawPrint.exe'), [deviceId, tmp], buffer)
                 .then(() => {
                     fs.unlinkSync(tmp);
@@ -419,7 +425,7 @@ export class DymoServices {
      *
      * @return {Promise<{deviceId:string,name:string}[]>} List of printers or empty list
      */
-    static listPrintersMacLinux() {
+    private static listPrintersMacLinux(): Promise<{deviceId: string, name: string}[]> {
         return new Promise((resolve, reject) => {
             // noinspection SpellCheckingInspection
             execute('lpstat', ['-e'])
@@ -435,8 +441,7 @@ export class DymoServices {
                         });
 
                     // Try to find the name ("Description:") of every printer found.
-                    /** @type {Promise[]} */
-                    const promises = [];
+                    const promises: Promise<string>[] = [];
                     printers.forEach(printer => {
                         // noinspection SpellCheckingInspection
                         promises.push(execute('lpstat', ['-l', '-p', printer.deviceId]));
@@ -472,7 +477,7 @@ export class DymoServices {
      *
      * @return {Promise<{deviceId:string,name:string}[]>} List of printers or empty list
      */
-    static listPrintersWindows() {
+    private static listPrintersWindows(): Promise<{deviceId: string, name: string}[]> {
         return new Promise((resolve, reject) => {
             execute('Powershell.exe', [
                 '-Command',
@@ -493,8 +498,8 @@ export class DymoServices {
      * @param stdout Process output
      * @return {{deviceId:string,name:string}[]} List of printers or empty list
      */
-    static stdoutHandler(stdout) {
-        const printers = [];
+    private static stdoutHandler(stdout: string): {deviceId: string, name: string}[] {
+        const printers: {deviceId: string, name: string}[] = [];
         stdout
             .split(/(\r?\n){2,}/)
             .map((printer) => printer.trim())
@@ -518,7 +523,7 @@ export class DymoServices {
      * @param printer
      * @return {{isValid: boolean, printerData: {name: string, deviceId: string}}}
      */
-    static isValidPrinter(printer) {
+    private static isValidPrinter(printer: string): {isValid: boolean, printerData: {name: string, deviceId: string}} {
         const printerData = {
             deviceId: '',
             name: '',
@@ -550,16 +555,15 @@ export class DymoServices {
      * @param {string} [tmpdir] optional, uses OS temp dir by default
      * @return {string} Absolute filename temp file
      */
-    static tmpFile(prefix, suffix, tmpdir) {
+    private static tmpFile(prefix: string = 'tmp.', suffix: string = '', tmpdir: string | undefined = undefined): string {
         prefix = (typeof prefix !== 'undefined') ? prefix : 'tmp.';
         suffix = (typeof suffix !== 'undefined') ? suffix : '';
         tmpdir = tmpdir ? tmpdir : os.tmpdir();
         const bytes = crypto.randomBytes(16);
-        return path.join(tmpdir, prefix + bytes.toString('hex') + suffix);
+        return path.join(tmpdir as string, prefix + bytes.toString('hex') + suffix);
     }
 }
 
-// Make those imageService functions available via this file.
 export {createImageWithText, loadImage} from './image-services.js';
 
 
