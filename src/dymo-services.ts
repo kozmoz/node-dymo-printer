@@ -82,9 +82,9 @@ export class DymoServices {
      *
      * @param config Optional printer configuration
      */
-    constructor(config: PrinterConfig) {
+    constructor(config: PrinterConfig = {}) {
         DymoServices.validateConfig(config);
-        this.config = config || {};
+        this.config = config;
     }
 
     /**
@@ -95,27 +95,29 @@ export class DymoServices {
      * @param [printCount] Number of prints (defaults to 1)
      * @return Resolves in case of success, rejects otherwise
      */
-    print(image: Jimp, printCount: number = 1): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const rotatedImage = rotateImage90DegreesCounterClockwise(image);
-            convertImageToBitmap(rotatedImage)
-                .then(bitmapImageBuffer => {
-                    this.printBitmap(bitmapImageBuffer, printCount)
-                        .then(resolve)
-                        .catch(reject);
-                })
-                .catch(reject);
-        });
+    async print(image: Jimp, printCount: number = 1): Promise<void> {
+        const rotatedImage = rotateImage90DegreesCounterClockwise(image);
+        const bitmapImageBuffer = await convertImageToBitmap(rotatedImage);
+        return this.printBitmap(bitmapImageBuffer, printCount);
     }
 
     /**
      * List all available system printers.
      *
-     * @return List of printers or empty list
+     * This method queries the operating system for installed printers and returns their details.
+     * The implementation varies by platform:
+     * - Windows: Uses PowerShell to query Win32_Printer
+     * - macOS/Linux: Uses lpstat to enumerate printers
+     *
+     * @return Promise that resolves to an array of printer objects, each containing:
+     *         - deviceId: The system identifier used to reference the printer
+     *         - name: A human-readable printer name (description when available)
+     *         Returns an empty array if no printers are found.
+     * @throws Error if the operating system is not supported (not Windows, macOS, or Linux)
      */
-    listPrinters(): Promise<{ deviceId: string, name: string }[]> {
+    async listPrinters(): Promise<{ deviceId: string, name: string }[]> {
         if (!IS_WINDOWS && !IS_MACOS && !IS_LINUX) {
-            return Promise.reject('Cannot list printers, unsupported operating system: ' + process.platform);
+            throw Error('Cannot list printers, unsupported operating system: ' + process.platform);
         }
         if (IS_WINDOWS) {
             return DymoServices.listPrintersWindows();
@@ -123,7 +125,7 @@ export class DymoServices {
         if (IS_MACOS || IS_LINUX) {
             return DymoServices.listPrintersMacLinux();
         }
-        return Promise.resolve([]);
+        return [];
     }
 
     /**
@@ -134,7 +136,7 @@ export class DymoServices {
      * @param [printCount] Number of prints
      * @return Resolves in case of success, rejects otherwise
      */
-    private printBitmap(imageBuffer: number[][], printCount: number = 1): Promise<void> {
+    private async printBitmap(imageBuffer: number[][], printCount: number = 1): Promise<void> {
         if (!imageBuffer || imageBuffer.length === 0) {
             throw Error('Empty imageBuffer, cannot print');
         }
@@ -215,61 +217,40 @@ export class DymoServices {
      *
      * @return Resolves in case of success, rejects otherwise
      */
-    private sendDataToPrinter(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const buffer = Buffer.concat(this.chunks);
-            const printerInterface = this.config.interface;
+    private async sendDataToPrinter(): Promise<void> {
+        const buffer = Buffer.concat(this.chunks);
+        const printerInterface = this.config.interface;
 
-            if (!printerInterface) {
-                // Try to guess what printer to use.
-                this.listPrinters()
-                    .then(printers => {
-                        // Use the first match for "LabelWriter 450".
-                        const printer = printers.find(printer => {
-                            // noinspection SpellCheckingInspection
-                            return printer.name && printer.name.toLowerCase().indexOf('dymo') !== -1;
-                        });
-                        if (!printer) {
-                            reject('Cannot find Dymo LabelWriter. Try to configure manually.');
-                            return;
-                        }
-                        // Found a Dymo label writer.
-                        this.config.interface = IS_WINDOWS ? 'WINDOWS' : 'CUPS';
-                        this.config.deviceId = printer.deviceId;
-                        this.sendDataToPrinter()
-                            .then(resolve)
-                            .catch(reject);
-                    })
-                    .catch(reject);
-                return;
+        if (!printerInterface) {
+            // Try to guess what printer to use.
+            const printers = await this.listPrinters();
+            // Use the first match for "LabelWriter 450".
+            const printer = printers.find(printer => {
+                // noinspection SpellCheckingInspection
+                return printer.name && printer.name.toLowerCase().indexOf('dymo') !== -1;
+            });
+            if (!printer) {
+                throw 'Cannot find Dymo LabelWriter. Try to configure manually.';
             }
+            // Found a Dymo label writer.
+            this.config.interface = IS_WINDOWS ? 'WINDOWS' : 'CUPS';
+            this.config.deviceId = printer.deviceId;
+            return this.sendDataToPrinter();
+        }
 
-            if (printerInterface === 'NETWORK') {
-                DymoServices.sendDataToNetworkPrinter(buffer, this.config.host, this.config.port)
-                    .then(resolve)
-                    .catch(reject);
-                return;
-            }
-            if (printerInterface === 'CUPS') {
-                DymoServices.sendDataToCupsPrinter(buffer, this.config.deviceId as string)
-                    .then(resolve)
-                    .catch(reject);
-                return;
-            }
-            if (printerInterface === 'WINDOWS') {
-                DymoServices.sendDataToWindowsPrinter(buffer, this.config.deviceId as string)
-                    .then(resolve)
-                    .catch(reject);
-                return;
-            }
-            if (printerInterface === 'DEVICE') {
-                DymoServices.sendDataToDevicePrinter(buffer, this.config.device as string)
-                    .then(resolve)
-                    .catch(reject);
-                return;
-            }
-            throw Error(`Unknown printer interface configured: "${printerInterface}"`);
-        });
+        if (printerInterface === 'NETWORK') {
+            return DymoServices.sendDataToNetworkPrinter(buffer, this.config.host, this.config.port);
+        }
+        if (printerInterface === 'CUPS') {
+            return DymoServices.sendDataToCupsPrinter(buffer, this.config.deviceId as string);
+        }
+        if (printerInterface === 'WINDOWS') {
+            return DymoServices.sendDataToWindowsPrinter(buffer, this.config.deviceId as string);
+        }
+        if (printerInterface === 'DEVICE') {
+            return DymoServices.sendDataToDevicePrinter(buffer, this.config.device as string);
+        }
+        throw Error(`Unknown printer interface configured: "${printerInterface}"`);
     }
 
     /**
@@ -312,7 +293,7 @@ export class DymoServices {
      * @param port Port number (defaults to 9100)
      * @return Resolves in case of success, rejects otherwise
      */
-    private static sendDataToNetworkPrinter(buffer: Buffer, host: string = 'localhost', port: number = 9100): Promise<void> {
+    private static async sendDataToNetworkPrinter(buffer: Buffer, host: string = 'localhost', port: number = 9100): Promise<void> {
         return new Promise((resolve, reject) => {
             const networkPrinter = net.connect({host, port, timeout: 30000}, function () {
                 networkPrinter.write(buffer, 'binary', () => {
@@ -340,11 +321,11 @@ export class DymoServices {
      * @param device Device location /dev/usb/lp0
      * @return Resolves in case of success, rejects otherwise
      */
-    private static sendDataToDevicePrinter(buffer: Buffer, device: string): Promise<void> {
+    private static async sendDataToDevicePrinter(buffer: Buffer, device: string): Promise<void> {
+        if (!device) {
+            throw Error('Cannot write to device, the device name is empty');
+        }
         return new Promise((resolve, reject) => {
-            if (!device) {
-                throw Error('Cannot write to device, the device name is empty');
-            }
             fs.writeFile(device, buffer, {encoding: 'binary'}, err => {
                 if (err) {
                     reject(err);
@@ -362,15 +343,11 @@ export class DymoServices {
      * @param deviceId CUPS device id
      * @return Resolves in case of success, rejects otherwise
      */
-    private static sendDataToCupsPrinter(buffer: Buffer, deviceId: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (!deviceId) {
-                throw Error('Cannot print to CUPS printer, deviceId is not configured.');
-            }
-            execute('lp', ['-d', `${deviceId}`], buffer)
-                .then(() => resolve())
-                .catch(reject);
-        });
+    private static async sendDataToCupsPrinter(buffer: Buffer, deviceId: string): Promise<void> {
+        if (!deviceId) {
+            throw Error('Cannot print to CUPS printer, deviceId is not configured.');
+        }
+        await execute('lp', ['-d', `${deviceId}`], buffer);
     }
 
     /**
@@ -380,24 +357,21 @@ export class DymoServices {
      * @param {string} deviceId Windows printer device id
      * @return Promise<void> Resolves in case of success, rejects otherwise
      */
-    private static sendDataToWindowsPrinter(buffer: Buffer, deviceId: string): Promise<void> {
+    private static async sendDataToWindowsPrinter(buffer: Buffer, deviceId: string): Promise<void> {
         // > RawPrint "Name of Your Printer" filename
         // http://www.columbia.edu/~em36/windowsrawprint.html
         // https://github.com/frogmorecs/RawPrint
-        return new Promise((resolve, reject) => {
-            const tmp = DymoServices.tmpFile('tmp.', '', undefined);
-            fs.writeFileSync(tmp, buffer, {encoding: 'binary'});
-            // Re-create __dirname for ESM
-            const __filename = new URL(import.meta.url).pathname;
-            const __dirname = path.dirname(__filename);
+        const tmp = DymoServices.tmpFile('tmp.', '', undefined);
+        fs.writeFileSync(tmp, buffer, {encoding: 'binary'});
+        // Re-create __dirname for ESM
+        const __filename = new URL(import.meta.url).pathname;
+        const __dirname = path.dirname(__filename);
 
-            execute(path.join(__dirname, '..', 'windows', 'RawPrint.exe'), [deviceId, tmp], buffer)
-                .then(() => {
-                    fs.unlinkSync(tmp);
-                    resolve();
-                })
-                .catch(reject);
-        });
+        try {
+            await execute(path.join(__dirname, '..', 'windows', 'RawPrint.exe'), [deviceId, tmp], buffer);
+        } finally {
+            fs.unlinkSync(tmp);
+        }
     }
 
     /**
@@ -405,49 +379,44 @@ export class DymoServices {
      *
      * @return List of printers or empty list
      */
-    private static listPrintersMacLinux(): Promise<{ deviceId: string, name: string }[]> {
-        return new Promise((resolve, reject) => {
+    private static async listPrintersMacLinux(): Promise<{ deviceId: string, name: string }[]> {
+        // noinspection SpellCheckingInspection
+        const stdout = await execute('lpstat', ['-e']);
+
+        const printers = stdout
+            .split('\n')
+            .filter(row => !!row.trim())
+            .map(row => {
+                return {
+                    deviceId: row.trim(),
+                    name: row.replace(/_+/g, ' ').trim(),
+                };
+            });
+
+        // Try to find the name ("Description:") of every printer found.
+        const promises: Promise<string>[] = [];
+        printers.forEach(printer => {
             // noinspection SpellCheckingInspection
-            execute('lpstat', ['-e'])
-                .then(stdout => {
-                    const printers = stdout
-                        .split('\n')
-                        .filter(row => !!row.trim())
-                        .map(row => {
-                            return {
-                                deviceId: row.trim(),
-                                name: row.replace(/_+/g, ' ').trim(),
-                            };
-                        });
-
-                    // Try to find the name ("Description:") of every printer found.
-                    const promises: Promise<string>[] = [];
-                    printers.forEach(printer => {
-                        // noinspection SpellCheckingInspection
-                        promises.push(execute('lpstat', ['-l', '-p', printer.deviceId]));
-                    });
-
-                    // Update the name for every printer description found.
-                    Promise.allSettled(promises)
-                        .then((results) => {
-                            results.forEach((result, idx) => {
-                                if (result.status === 'fulfilled' && result.value) {
-                                    const value = `${result.value}`;
-                                    const description = value
-                                        .split('\n')
-                                        .filter(line => /^description:/gi.test(line.trim()))
-                                        .map(line => line.replace(/description:/gi, '').trim())
-                                        .find(line => !!line);
-                                    if (description) {
-                                        printers[idx].name = description;
-                                    }
-                                }
-                            });
-                            resolve(printers);
-                        });
-                })
-                .catch(reject);
+            promises.push(execute('lpstat', ['-l', '-p', printer.deviceId]));
         });
+
+        // Update the name for every printer description found.
+        const results = await Promise.allSettled(promises);
+
+        results.forEach((result, idx) => {
+            if (result.status === 'fulfilled' && result.value) {
+                const value = `${result.value}`;
+                const description = value
+                    .split('\n')
+                    .filter(line => /^description:/gi.test(line.trim()))
+                    .map(line => line.replace(/description:/gi, '').trim())
+                    .find(line => !!line);
+                if (description) {
+                    printers[idx].name = description;
+                }
+            }
+        });
+        return printers;
     }
 
     /**
@@ -455,17 +424,12 @@ export class DymoServices {
      *
      * @return List of printers or empty list
      */
-    private static listPrintersWindows(): Promise<{ deviceId: string, name: string }[]> {
-        return new Promise((resolve, reject) => {
-            execute('Powershell.exe', [
-                '-Command',
-                'Get-CimInstance Win32_Printer -Property DeviceID,Name'
-            ])
-                .then(stdout => {
-                    resolve(DymoServices.stdoutHandler(stdout));
-                })
-                .catch(reject);
-        });
+    private static async listPrintersWindows(): Promise<{ deviceId: string, name: string }[]> {
+        const stdout = await execute('Powershell.exe', [
+            '-Command',
+            'Get-CimInstance Win32_Printer -Property DeviceID,Name'
+        ]);
+        return DymoServices.stdoutHandler(stdout);
     }
 
     /**

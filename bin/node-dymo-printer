@@ -25,41 +25,29 @@ if (options.version) {
 }
 
 if (options['list-printers']) {
-    new DymoServices().listPrinters()
-        .then(printers => {
-            console.log(JSON.stringify(printers, null, 2));
-            process.exit(0);
-        })
-        .catch(error => {
-            cli.error(JSON.stringify(error, null, 2));
-            process.exit(1);
-        });
+    try {
+        const printers = await new DymoServices().listPrinters();
+        console.log(JSON.stringify(printers, null, 2));
+        process.exit(0);
+    } catch (error) {
+        cli.error(error instanceof Error ? error.message : JSON.stringify(error, null, 2));
+        process.exit(1);
+    }
 } else if (arg1) {
     // Print given text as label.
-    const dymoServices = new DymoServices();
-    const {imageWidth, imageHeight} = DymoServices.DYMO_LABELS['89mm x 28mm']; // Use a valid key
-    imageServices.createImageWithText(imageWidth, imageHeight, 50, 128, arg1)
-        .then(image => {
-            // Rotate image for the label writer.
-            image.rotate(-90, true);
-            imageServices.convertImageToBitmap(image)
-                .then(bitmap => {
-                    dymoServices.print(bitmap)
-                        .then(() => process.exit(0))
-                        .catch(error => {
-                            cli.error(JSON.stringify(error, null, 2));
-                            process.exit(1);
-                        });
-                })
-                .catch(error => {
-                    cli.error(JSON.stringify(error, null, 2));
-                    process.exit(1);
-                });
-        })
-        .catch(error => {
-            cli.error(JSON.stringify(error, null, 2));
-            process.exit(1);
-        });
+    try {
+        const dymoServices = new DymoServices();
+        const {imageWidth, imageHeight} = DymoServices.DYMO_LABELS['89mm x 28mm']; // Use a valid key
+        const image = await imageServices.createImageWithText(imageWidth, imageHeight, 50, 128, arg1);
+        // Rotate image for the label writer.
+        image.rotate(-90, true);
+        const bitmap = await imageServices.convertImageToBitmap(image);
+        await dymoServices.printBitmap(bitmap);
+        process.exit(0);
+    } catch (error) {
+        cli.error(error instanceof Error ? error.message : JSON.stringify(error, null, 2));
+        process.exit(1);
+    }
 } else {
     // Use cli.error() to get nice red coloring.
     cli.error(`Provide at least one argument to ${program}`);

@@ -63,52 +63,41 @@ function simulateNewlines(font: any, maxTextWidth: number, text: string): string
  * @param fontSize Size of the font; Between 8 and 128 pixels
  * @param text Text to print
  */
-export function createImageWithText(imageWidth: number, imageHeight: number, horizontalMargin: number, fontSize: number, text: string): Promise<Jimp> {
-    return new Promise((resolve, reject) => {
+export async function createImageWithText(imageWidth: number, imageHeight: number, horizontalMargin: number, fontSize: number, text: string): Promise<Jimp> {
 
-        // Test parameters.
-        if (!imageWidth || imageWidth < 0 || !Number.isInteger(imageWidth)) {
-            throw Error(`createImage(): imageWidth should be a positive integer: "${imageWidth}"`);
-        }
-        if (!imageHeight || imageHeight < 0 || !Number.isInteger(imageHeight)) {
-            throw Error(`createImage(): imageHeight should be a positive integer: : "${imageHeight}"`);
-        }
-        if (horizontalMargin < 0 || !Number.isInteger(horizontalMargin)) {
-            throw Error(`createImage(): horizontalMargin should be positive integer or 0: "${horizontalMargin}"`);
-        }
-        if (!fontSize || fontSize < MIN_FONT_SIZE || fontSize > MAX_FONT_SIZE || !Number.isInteger(fontSize)) {
-            throw Error(`createImage(): invalid font size: "${fontSize}"`);
-        }
-        if (!text) {
-            throw Error(`createImage(): Empty text, nothing to print.`);
-        }
+    // Test parameters.
+    if (!imageWidth || imageWidth < 0 || !Number.isInteger(imageWidth)) {
+        throw Error(`createImage(): imageWidth should be a positive integer: "${imageWidth}"`);
+    }
+    if (!imageHeight || imageHeight < 0 || !Number.isInteger(imageHeight)) {
+        throw Error(`createImage(): imageHeight should be a positive integer: : "${imageHeight}"`);
+    }
+    if (horizontalMargin < 0 || !Number.isInteger(horizontalMargin)) {
+        throw Error(`createImage(): horizontalMargin should be positive integer or 0: "${horizontalMargin}"`);
+    }
+    if (!fontSize || fontSize < MIN_FONT_SIZE || fontSize > MAX_FONT_SIZE || !Number.isInteger(fontSize)) {
+        throw Error(`createImage(): invalid font size: "${fontSize}"`);
+    }
+    if (!text) {
+        throw Error(`createImage(): Empty text, nothing to print.`);
+    }
 
-        new Jimp(imageWidth, imageHeight, '#FFFFFF', (err: any, image: Jimp) => {
-            if (err) {
-                reject(err);
-                return;
-            }
+    const image = await Jimp.read(imageWidth, imageHeight, '#FFFFFF');
+    const font = await Jimp.loadFont((Jimp as any)[`FONT_SANS_${fontSize}_BLACK`]);
 
-            Jimp.loadFont((Jimp as any)[`FONT_SANS_${fontSize}_BLACK`])
-                .then(font => {
+    const maxTextWidth = image.bitmap.width - 2 * horizontalMargin;
+    const maxTextHeight = image.bitmap.height;
+    const textObj = {
+        // Simulate newlines.
+        text: simulateNewlines(font, maxTextWidth, text),
+        alignmentX: (Jimp as any).HORIZONTAL_ALIGN_LEFT,
+        alignmentY: (Jimp as any).VERTICAL_ALIGN_MIDDLE
+    };
+    // Print text.
+    // noinspection JSUnresolvedFunction
+    image.print(font, horizontalMargin, 0, textObj, maxTextWidth, maxTextHeight);
 
-                    const maxTextWidth = image.bitmap.width - 2 * horizontalMargin;
-                    const maxTextHeight = image.bitmap.height;
-                    const textObj = {
-                        // Simulate newlines.
-                        text: simulateNewlines(font, maxTextWidth, text),
-                        alignmentX: (Jimp as any).HORIZONTAL_ALIGN_LEFT,
-                        alignmentY: (Jimp as any).VERTICAL_ALIGN_MIDDLE
-                    };
-                    // Print text.
-                    // noinspection JSUnresolvedFunction
-                    image.print(font, horizontalMargin, 0, textObj, maxTextWidth, maxTextHeight);
-
-                    resolve(image);
-                })
-                .catch(reject);
-        });
-    });
+    return image;
 }
 
 /**
@@ -117,52 +106,50 @@ export function createImageWithText(imageWidth: number, imageHeight: number, hor
  * @param image Jimp image object (image will be manipulated)
  * @return Bitmap buffer array
  */
-export function convertImageToBitmap(image: Jimp): Promise<number[][]> {
-    return new Promise((resolve) => {
+export async function convertImageToBitmap(image: Jimp): Promise<number[][]> {
 
-        if (!image) {
-            throw Error('convertImageToBitmapBuffer(): parameter image is required');
+    if (!image) {
+        throw Error('convertImageToBitmapBuffer(): parameter image is required');
+    }
+    if (!image.scan) {
+        throw Error('convertImageToBitmapBuffer(): parameter image should be of type Jimp image');
+    }
+
+    // Convert to black- and white image.
+    // noinspection JSUnresolvedFunction
+    const bwImage = image
+        .opaque()
+        .greyscale()
+        .brightness(0.3)
+        .dither565()
+        .posterize(2);
+
+    const bitmap: number[][] = [];
+
+    // Helper method is available to scan a region of the bitmap:
+    // image.scan(x, y, w, h, f); // scan a given region of the bitmap and call the function f on every pixel
+    bwImage.scan(0, 0, bwImage.bitmap.width, bwImage.bitmap.height, (x, y, idx) => {
+        // x, y is the position of this pixel on the image.
+        // idx is the position start position of this rgba tuple in the bitmap Buffer.
+
+        // Add a new empty row.
+        if (bitmap.length <= y) {
+            const bytes = Math.ceil(bwImage.bitmap.width / 8);
+            bitmap.push(new Array(bytes).fill(0));
         }
-        if (!image.scan) {
-            throw Error('convertImageToBitmapBuffer(): parameter image should be of type Jimp image');
+
+        // The image is posterized, so we only have to check the "red" channel.
+        const black = (bwImage.bitmap.data[idx] < 50);
+        if (black) {
+            const row = bitmap[y];
+            // Set the right bit.
+            // Pixels from left to right, but bits from right to left. Translate this.
+            const byteIndex = Math.floor(x / 8);
+            // Set bits from left to right.
+            row[byteIndex] = setBit(row[byteIndex], [7, 6, 5, 4, 3, 2, 1, 0][x % 8]);
         }
-
-        // Convert to black- and white image.
-        // noinspection JSUnresolvedFunction
-        const bwImage = image
-            .opaque()
-            .greyscale()
-            .brightness(0.3)
-            .dither565()
-            .posterize(2);
-
-        const bitmap: number[][] = [];
-
-        // Helper method is available to scan a region of the bitmap:
-        // image.scan(x, y, w, h, f); // scan a given region of the bitmap and call the function f on every pixel
-        bwImage.scan(0, 0, bwImage.bitmap.width, bwImage.bitmap.height, (x, y, idx) => {
-            // x, y is the position of this pixel on the image.
-            // idx is the position start position of this rgba tuple in the bitmap Buffer.
-
-            // Add a new empty row.
-            if (bitmap.length <= y) {
-                const bytes = Math.ceil(bwImage.bitmap.width / 8);
-                bitmap.push(new Array(bytes).fill(0));
-            }
-
-            // The image is posterized, so we only have to check the "red" channel.
-            const black = (bwImage.bitmap.data[idx] < 50);
-            if (black) {
-                const row = bitmap[y];
-                // Set the right bit.
-                // Pixels from left to right, but bits from right to left. Translate this.
-                const byteIndex = Math.floor(x / 8);
-                // Set bits from left to right.
-                row[byteIndex] = setBit(row[byteIndex], [7, 6, 5, 4, 3, 2, 1, 0][x % 8]);
-            }
-        });
-        resolve(bitmap);
     });
+    return bitmap;
 }
 
 /**
@@ -171,7 +158,7 @@ export function convertImageToBitmap(image: Jimp): Promise<number[][]> {
  * @param arg Path, URL, Buffer or Jimp image
  * @return Promise which resolves with image when successfully loaded, rejects with error otherwise
  */
-export function loadImage(arg: string | Buffer | Jimp): Promise<Jimp> {
+export async function loadImage(arg: string | Buffer | Jimp): Promise<Jimp> {
     return Jimp.read(arg as any);
 }
 
