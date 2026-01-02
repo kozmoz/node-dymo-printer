@@ -1,59 +1,46 @@
 # node-dymo-printer
 
-A library / module to print labels from Node.js. Pure javascript cross-platform with no platform specific dependencies. There is no need to install
-the DYMO SDK or DYMO Webservices.
+A lightweight, zero-dependency Node.js library for DYMO LabelWriter 400/450 series printers. 
+Pure JavaScript, cross-platform, and functions without the DYMO SDK or Web Services.
 
-It has been tested to work on Windows 10, macOS (Big Sur 11.6, Monterey 12.1) and Ubuntu 21.10.
+It has been tested to work on Windows 10, macOS (11+) and Ubuntu 21.10.
 
 Developed for the DYMO LabelWriter 450, but might also work for other models.
 
-## Prerequisites ##
+## Initialize
 
-- [Node](https://www.nodejs.org) v >= 12
+Prerequisites
+- [Node](https://www.nodejs.org) v >= 18
 - NPM v >= 6
-
-### Initialize
-
-**1. Create a new project directory**
-
-Open your terminal (Command Prompt, Git Bash, etc.), and run the following commands:
-
-```shell
-mkdir myapp  # Creates a new folder named 'myapp'
-cd myapp     # Moves into the new 'myapp' folder
-npm init     # Initializes a new Node.js project
-````
-
-When prompted, you can hit Enter multiple times to accept the default settings. 
-This will create a package.json file that helps manage the project's dependencies. 
-
-**2. Install the node-dymo-printer module**
-
-Once inside the myapp folder, install the necessary module by running:
 
 ```shell
 npm install node-dymo-printer
 ```
 
-This will download and add the node-dymo-printer module to your project.
+## Quick Start
 
-**3. Run a demo script**
+The following example finds the printer automatically and prints a standard label.
 
-Now, you can try running one of the example scripts provided below. For example, after adding the demo1.js file to your project folder (myapp), run:
+```Javascript
+import { DymoServices, createImageWithText } from 'node-dymo-printer';
 
-```shell
-node demo1.js
+// Define label dimensions and create an image
+const { imageWidth, imageHeight } = DymoServices.DYMO_LABELS['89mm x 36mm'];
+const image = await createImageWithText(imageWidth, imageHeight, 0, 128, 'Hello World!');
+
+// Print (empty config auto-detects the printer)
+const printer = new DymoServices({});
+await printer.print(image, 1);
 ```
 
 ### Examples
 
-1. `demo1.js`: Tries to find the DYMO label printer automatically and prints "Hello world!".
-2. `demo2.js`: Similar to the first one, instead that the configuration contains the printer connection details.
-3. `demo3.js`: Show a list of all installed printers.
-4. `demo4.js`: Load an image and print it as label.
+See the demo<n>.js files in the repository for detailed use cases:
 
-Code excerpt to print a text label. <br />
-See the `demo<n>.js` files for all the details.
+1. `demo1.js`: Auto-detect printer and print "Hello world!".
+2. `demo2.js`: Connect using specific printer details.
+3. `demo3.js`: List all installed printers.
+4. `demo4.js`: Load and print an image file.
 
 ```Javascript
 // Create landscape image with the dimensions of the label and with the text "Hello World!".
@@ -76,7 +63,7 @@ For manual configuration, those interfaces are supported: "NETWORK", "CUPS", "WI
 // Network example (Linux, Windows, macOS).
 new DymoServices({
     interface: 'NETWORK',
-    host: '192.168.1.229',
+    host: '192.168.1.145',
     port: 9100
 });
 
@@ -116,6 +103,3 @@ see [RawPrint](https://github.com/frogmorecs/RawPrint)
 The source code to list all printers in Windows, is borrowed from this project: [pdf-to-printer](https://github.com/artiebits/pdf-to-printer)
 
 [DYMO LabelWriter 450 Series Printers Technical Reference Manual](https://download.dymo.com/dymo/technical-data-sheets/LW%20450%20Series%20Technical%20Reference.pdf)
-
-This npm module is compatible with both commonJS and ESM.
-[How to Create a Hybrid NPM Module for ESM and CommonJS](https://www.sensedeep.com/blog/posts/2021/how-to-create-single-source-npm-module.html)
