@@ -1,10 +1,11 @@
 import {createImageWithText, DymoServices} from 'node-dymo-printer';
 
 /**
- * Configure the network printer manually and print "Hello World!" on a 89mm x 36mm label.
+ * Configure the network printer manually and print "Hello World!" on an 89mm x 36mm label.
  */
 
 // Printer connection details.
+/** @type {PrinterConfig} */
 const config = {
     interface: 'NETWORK',
     host: '192.168.1.145',
@@ -16,7 +17,7 @@ const {imageWidth, imageHeight} = DymoServices.DYMO_LABELS['54mm x 25mm'];
 const image = await createImageWithText(imageWidth, imageHeight, 50, 128, 'Hello World!');
 
 // For debugging purposes, write the image to disk.
-image.write('./image2.png');
+void image.write('./image2.png');
 
 try {
     // Print the label.

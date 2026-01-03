@@ -3,10 +3,9 @@ import fs from 'fs';
 import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
-import {execute} from './system-services.js';
-import {convertImageToBitmap, rotateImage90DegreesCounterClockwise} from './image-services.js';
-// noinspection ES6UnusedImports
-import {JimpInstance} from 'jimp';
+import {execute} from './system-services.ts';
+import {convertImageToBitmap, rotateImage90DegreesCounterClockwise} from './image-services.ts';
+import {Jimp} from "jimp";
 
 // Technical specifications Dymo LabelWriter 450.
 // https://download.dymo.com/dymo/user-guides/LabelWriter/LWSE450/LWSE450_TechnicalReference.pdf
@@ -38,7 +37,7 @@ export type PrinterInterface = 'CUPS' | 'NETWORK' | 'WINDOWS' | 'DEVICE';
 /**
  * Printer configuration type.
  */
-type PrinterConfig = {
+export type PrinterConfig = {
     interface?: PrinterInterface;
     host?: string;
     port?: number;
@@ -95,7 +94,7 @@ export class DymoServices {
      * @param [printCount] Number of prints (defaults to 1)
      * @return Resolves in case of success, rejects otherwise
      */
-    async print(image: JimpInstance, printCount: number = 1): Promise<void> {
+    async print(image: InstanceType<typeof Jimp>, printCount: number = 1): Promise<void> {
         const rotatedImage = rotateImage90DegreesCounterClockwise(image);
         const bitmapImageBuffer = await convertImageToBitmap(rotatedImage);
         return this.printBitmap(bitmapImageBuffer, printCount);
@@ -499,6 +498,6 @@ export class DymoServices {
     }
 }
 
-export {createImageWithText, loadImage} from './image-services.js';
+export {createImageWithText, loadImage} from './image-services.ts';
 
 

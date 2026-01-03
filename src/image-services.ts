@@ -1,4 +1,4 @@
-import {HorizontalAlign, Jimp, JimpInstance, loadFont, measureText, VerticalAlign} from 'jimp';
+import {HorizontalAlign, Jimp, loadFont, measureText, VerticalAlign} from 'jimp';
 import {SANS_10_BLACK, SANS_128_BLACK, SANS_12_BLACK, SANS_14_BLACK, SANS_16_BLACK, SANS_32_BLACK, SANS_64_BLACK, SANS_8_BLACK} from "jimp/fonts";
 
 /**
@@ -61,7 +61,7 @@ function simulateNewlines(font: any, maxTextWidth: number, text: string): string
  * @param fontSize Size of the font; Between 8 and 128 pixels
  * @param text Text to print
  */
-export async function createImageWithText(imageWidth: number, imageHeight: number, horizontalMargin: number, fontSize: 8 | 10 | 12 | 14 | 16 | 32 | 64 | 128, text: string): Promise<JimpInstance> {
+export async function createImageWithText(imageWidth: number, imageHeight: number, horizontalMargin: number, fontSize: 8 | 10 | 12 | 14 | 16 | 32 | 64 | 128, text: string): Promise<InstanceType<typeof Jimp>> {
 
     // Test parameters.
     if (!imageWidth || imageWidth < 0 || !Number.isInteger(imageWidth)) {
@@ -137,7 +137,7 @@ export async function createImageWithText(imageWidth: number, imageHeight: numbe
  * @param image Jimp image object (image will be manipulated)
  * @return Bitmap buffer array
  */
-export async function convertImageToBitmap(image: JimpInstance): Promise<number[][]> {
+export async function convertImageToBitmap(image: InstanceType<typeof Jimp>): Promise<number[][]> {
 
     if (!image) {
         throw Error('convertImageToBitmapBuffer(): parameter image is required');
@@ -146,11 +146,11 @@ export async function convertImageToBitmap(image: JimpInstance): Promise<number[
         throw Error('convertImageToBitmapBuffer(): parameter image should be of type Jimp image');
     }
 
+    // Make a clone so the original image is not modified.
     // Convert to black- and white image.
-    const bwImage = image
+    const bwImage = image.clone()
         .opaque()
         .greyscale()
-        .brightness(0.3)
         .dither()
         .posterize(2);
 
@@ -188,14 +188,14 @@ export async function convertImageToBitmap(image: JimpInstance): Promise<number[
  * @param arg Path, URL, Buffer or Jimp image
  * @return Promise which resolves with image when successfully loaded, rejects with error otherwise
  */
-export async function loadImage(arg: string | Buffer | JimpInstance): Promise<JimpInstance> {
+export async function loadImage(arg: string | Buffer | InstanceType<typeof Jimp>): Promise<InstanceType<typeof Jimp>> {
     if (arg && (arg as any)['readInt8']) {
-        return (await Jimp.fromBuffer(arg as Buffer)) as JimpInstance;
+        return (await Jimp.fromBuffer(arg as Buffer)) as InstanceType<typeof Jimp>;
     }
     if (typeof arg === 'string') {
-        return (await Jimp.read(arg)) as JimpInstance;
+        return (await Jimp.read(arg)) as InstanceType<typeof Jimp>;
     }
-    return arg as JimpInstance;
+    return arg as InstanceType<typeof Jimp>;
 }
 
 /**
@@ -204,7 +204,7 @@ export async function loadImage(arg: string | Buffer | JimpInstance): Promise<Ji
  * @param image Image to rotate
  * @return New rotated image
  */
-export function rotateImage90DegreesCounterClockwise(image: JimpInstance): JimpInstance {
+export function rotateImage90DegreesCounterClockwise(image: InstanceType<typeof Jimp>): InstanceType<typeof Jimp> {
 
     if (!image) {
         throw Error('rotateImage90DegreesCounterClockwise(): parameter image is required');
@@ -213,12 +213,13 @@ export function rotateImage90DegreesCounterClockwise(image: JimpInstance): JimpI
         throw Error('rotateImage90DegreesCounterClockwise(): parameter image should be of type Jimp image');
     }
 
+    // Make a clone so the original image is not modified.
     // Rotate the image for the label writer. Needs to be in portrait mode for printing.
     const clonedImage = image.clone();
     const previousWidth = clonedImage.bitmap.width;
     const previousHeight = clonedImage.bitmap.height;
 
-    clonedImage.rotate({deg: -90, mode: true});
+    clonedImage.rotate({deg: -90});
 
     // Fix for: when rotated, the width and height of pic gets larger #808
     // https://github.com/oliver-moran/jimp/issues/808

@@ -22,7 +22,8 @@
     /* Miscellaneous */
     "pretty": true,
     "allowJs": true,
-    "types": ["node"]
+    "types": ["node"],
+    "allowImportingTsExtensions": true
   },
   "compileOnSave": false,
   "include": ["src"],

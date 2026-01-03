@@ -1,6 +1,6 @@
 {
   "name": "node-dymo-printer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight, zero-dependency Node.js library for DYMO LabelWriter 400/450 series printers. Pure JavaScript, cross-platform, and functions without the DYMO SDK or Web Services.",
   "homepage": "https://github.com/kozmoz/node-dymo-printer",
   "type": "module",
