@@ -3,8 +3,8 @@ import fs from 'fs';
 import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
-import {execute} from './system-services.ts';
-import {convertImageToBitmap, rotateImage90DegreesCounterClockwise} from './image-services.ts';
+import {execute} from './system-services.js';
+import {convertImageToBitmap, rotateImage90DegreesCounterClockwise} from './image-services.js';
 import {Jimp} from "jimp";
 
 // Technical specifications Dymo LabelWriter 450.
@@ -498,6 +498,6 @@ export class DymoServices {
     }
 }
 
-export {createImageWithText, loadImage} from './image-services.ts';
+export {createImageWithText, loadImage} from './image-services.js';
 
 

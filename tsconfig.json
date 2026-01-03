@@ -18,13 +18,12 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "declaration": true,
+    "emitDeclarationOnly": false,
 
     /* Miscellaneous */
     "pretty": true,
     "allowJs": true,
     "types": ["node"],
-    "allowImportingTsExtensions": true,
-    "noEmit": true
   },
   "compileOnSave": false,
   "include": ["src"],
