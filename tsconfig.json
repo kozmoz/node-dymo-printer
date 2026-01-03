@@ -23,7 +23,8 @@
     "pretty": true,
     "allowJs": true,
     "types": ["node"],
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "compileOnSave": false,
   "include": ["src"],
